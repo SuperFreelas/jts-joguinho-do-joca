@@ -34,6 +34,12 @@ export const COLORS = {
   hud: '#eafff2',
 };
 
+// --- Gols (abertura nas laterais; resto da lateral é parede) ---
+export const GOAL = {
+  OPENING: 170, // altura da abertura do gol (eixo Y), centralizada
+  DEPTH: 18, // profundidade visual da rede (eixo X)
+};
+
 // --- Goleiros (paddles) — barras VERTICAIS nas laterais ---
 export const PADDLE = {
   LEN: 70, // comprimento (eixo Y)

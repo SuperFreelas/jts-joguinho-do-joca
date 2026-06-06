@@ -2,7 +2,7 @@
 // Bola viaja na horizontal; goleiros são barras verticais nas laterais (esq/dir).
 // Sem efeitos colaterais visuais — só atualiza estado e devolve eventos.
 
-import { FIELD, BALL, PADDLE } from '../data/constants.js';
+import { FIELD, BALL, PADDLE, GOAL } from '../data/constants.js';
 
 export function clamp(v, lo, hi) {
   return v < lo ? lo : v > hi ? hi : v;
@@ -90,11 +90,23 @@ export function stepBall(ball, paddles, opts = {}) {
     }
   }
 
-  // --- Gols ---
-  // Bola sai pela direita => quem ataca da esquerda (P2) marcou.
-  if (ball.x - r > FIELD.W) return { type: 'goal', scorer: 'left' };
-  // Bola sai pela esquerda => P1 (direita) marcou.
-  if (ball.x + r < 0) return { type: 'goal', scorer: 'right' };
+  // --- Laterais: parede, EXCETO na abertura do gol (centralizada) ---
+  const goalTop = (FIELD.H - GOAL.OPENING) / 2;
+  const goalBottom = (FIELD.H + GOAL.OPENING) / 2;
+  const inGoalMouth = ball.y >= goalTop && ball.y <= goalBottom;
+
+  // Borda direita
+  if (ball.x + r >= FIELD.W) {
+    if (inGoalMouth) return { type: 'goal', scorer: 'left' }; // P2 (esquerda) marcou
+    ball.x = FIELD.W - r;
+    ball.vx = -Math.abs(ball.vx); // quica na trave/lateral
+  }
+  // Borda esquerda
+  if (ball.x - r <= 0) {
+    if (inGoalMouth) return { type: 'goal', scorer: 'right' }; // P1 (direita) marcou
+    ball.x = r;
+    ball.vx = Math.abs(ball.vx);
+  }
 
   return { type: 'none' };
 }

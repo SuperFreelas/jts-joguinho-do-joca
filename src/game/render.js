@@ -1,7 +1,7 @@
 // Renderização do campo no canvas 2D — PAISAGEM. Desenha SEMPRE em unidades lógicas
 // (FIELD.W x FIELD.H); o caller configura o transform de DPR antes (setupCanvas).
 
-import { FIELD, COLORS, PADDLE, BALL, TIMER } from '../data/constants.js';
+import { FIELD, COLORS, PADDLE, BALL, TIMER, GOAL } from '../data/constants.js';
 
 export function setupCanvas(canvas) {
   const dpr = window.devicePixelRatio || 1;
@@ -90,8 +90,8 @@ function drawField(ctx) {
 
 function drawGoal(ctx, left) {
   const { W, H } = FIELD;
-  const gh = 170; // abertura (eixo Y)
-  const gd = 18; // profundidade (eixo X)
+  const gh = GOAL.OPENING; // abertura (eixo Y)
+  const gd = GOAL.DEPTH; // profundidade (eixo X)
   const y = (H - gh) / 2;
   const x = left ? 0 : W - gd;
 
