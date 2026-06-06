@@ -23,9 +23,8 @@ export default function GameScreen({ mode, onFinish }) {
       const aw = wrap.clientWidth;
       const ah = wrap.clientHeight;
       const scale = Math.min(aw / FIELD.W, ah / FIELD.H);
-      scaler.style.transform = `scale(${scale})`;
-      // centraliza horizontalmente (transform-origin: top center)
-      scaler.style.marginTop = `${Math.max(0, (ah - FIELD.H * scale) / 2)}px`;
+      // centrado via left/top 50% + translate(-50%,-50%)
+      scaler.style.transform = `translate(-50%, -50%) scale(${scale})`;
     };
     fit();
     const ro = new ResizeObserver(fit);

@@ -1,8 +1,8 @@
 import { touchAxis } from '../game/input.js';
 import { MODE } from '../data/constants.js';
 
-// Botões de toque (◀ ▶) por jogador, fallback mobile. Escrevem em input.touchAxis.
-// onTouchStart/End com preventDefault para evitar delay/scroll.
+// Botões de toque (▲ ▼) por jogador — PAISAGEM. Escrevem em input.touchAxis.
+// P1 (direita/amarelo) -> borda direita. P2 (esquerda/azul) -> borda esquerda.
 function HoldButton({ player, dir, label }) {
   const set = (v) => (e) => {
     e.preventDefault();
@@ -26,17 +26,17 @@ function HoldButton({ player, dir, label }) {
 export default function TouchControls({ mode }) {
   return (
     <div className="touch-controls">
-      {/* Jogador 2 (cima) — escondido no VS Máquina */}
+      {/* Jogador 2 (esquerda/azul) — escondido no VS Máquina */}
       {mode !== MODE.VS_CPU && (
-        <div className="touch-zone touch-zone--top">
-          <HoldButton player={1} dir={-1} label="◀" />
-          <HoldButton player={1} dir={1} label="▶" />
+        <div className="touch-zone touch-zone--left">
+          <HoldButton player={1} dir={-1} label="▲" />
+          <HoldButton player={1} dir={1} label="▼" />
         </div>
       )}
-      {/* Jogador 1 (baixo) */}
-      <div className="touch-zone touch-zone--bottom">
-        <HoldButton player={0} dir={-1} label="◀" />
-        <HoldButton player={0} dir={1} label="▶" />
+      {/* Jogador 1 (direita/amarelo) */}
+      <div className="touch-zone touch-zone--right">
+        <HoldButton player={0} dir={-1} label="▲" />
+        <HoldButton player={0} dir={1} label="▼" />
       </div>
     </div>
   );

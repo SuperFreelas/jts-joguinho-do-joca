@@ -3,10 +3,13 @@
 // mas usa connected/disconnected p/ status e overlay de reconexão.
 //
 // Mapeamento PS4 "standard" (Chrome/Safari macOS, gamepad.mapping === 'standard'):
-//   axes[0] = analógico esquerdo X
+//   axes[1] = analógico esquerdo Y (cima negativo)
 //   buttons[0]  = X (cross)  -> confirmar
 //   buttons[12..15] = d-pad cima/baixo/esq/dir
 // Em mapping não-standard, ignoramos índices e caímos no teclado.
+//
+// PAISAGEM: goleiros se movem na VERTICAL. -1 = cima, +1 = baixo.
+// Jogador 0 = P1 (amarelo, goleiro da DIREITA). Jogador 1 = P2 (azul, ESQUERDA).
 
 import { INPUT } from '../data/constants.js';
 
@@ -19,8 +22,11 @@ function ensureKeyboard() {
   keyboardReady = true;
   window.addEventListener('keydown', (e) => {
     keys.add(e.key);
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === 'Enter' || e.key === ' ' || e.key.startsWith('Arrow')) {
+      // evita o scroll da página com setas/espaço durante o jogo
       e.preventDefault();
+    }
+    if (e.key === 'Enter' || e.key === ' ') {
       confirmListeners.forEach((fn) => fn(0));
     }
   });
@@ -42,17 +48,17 @@ function applyDeadzone(v) {
   return Math.abs(v) < INPUT.AXIS_DEADZONE ? 0 : v;
 }
 
-// Eixo X de um pad "standard": analógico OU d-pad.
-function padAxisX(pad) {
+// Eixo Y de um pad "standard": analógico OU d-pad (cima = -1, baixo = +1).
+function padAxisY(pad) {
   if (!pad || pad.mapping !== 'standard') return 0;
-  let x = applyDeadzone(pad.axes[0] || 0);
-  if (x === 0) {
-    const left = pad.buttons[14] && pad.buttons[14].pressed;
-    const right = pad.buttons[15] && pad.buttons[15].pressed;
-    if (left) x = -1;
-    else if (right) x = 1;
+  let y = applyDeadzone(pad.axes[1] || 0);
+  if (y === 0) {
+    const up = pad.buttons[12] && pad.buttons[12].pressed;
+    const down = pad.buttons[13] && pad.buttons[13].pressed;
+    if (up) y = -1;
+    else if (down) y = 1;
   }
-  return x;
+  return y;
 }
 
 function padConfirm(pad) {
@@ -72,33 +78,33 @@ export function gamepadStatus() {
   };
 }
 
-// Lê o input lateral de um jogador (0 = P1/baixo, 1 = P2/cima).
-// Retorna -1..1. Combina gamepad + teclado + touch.
+// Lê o input vertical de um jogador (0 = P1/direita, 1 = P2/esquerda).
+// Retorna -1..1 (cima/baixo). Combina gamepad + teclado + touch.
 export function readPlayerAxis(player) {
   ensureKeyboard();
   const pads = getPads();
   const standard = pads.filter((p) => p.mapping === 'standard');
-  let x = 0;
+  let y = 0;
 
   // Gamepad: P1 -> primeiro pad standard, P2 -> segundo.
   const pad = standard[player];
-  if (pad) x = padAxisX(pad);
+  if (pad) y = padAxisY(pad);
 
-  // Teclado
-  if (x === 0) {
+  // Teclado: P1 = W/S, P2 = ↑/↓
+  if (y === 0) {
     if (player === 0) {
-      if (keys.has('a') || keys.has('A')) x = -1;
-      else if (keys.has('d') || keys.has('D')) x = 1;
+      if (keys.has('w') || keys.has('W')) y = -1;
+      else if (keys.has('s') || keys.has('S')) y = 1;
     } else {
-      if (keys.has('ArrowLeft')) x = -1;
-      else if (keys.has('ArrowRight')) x = 1;
+      if (keys.has('ArrowUp')) y = -1;
+      else if (keys.has('ArrowDown')) y = 1;
     }
   }
 
   // Touch
-  if (x === 0 && touchAxis[player]) x = touchAxis[player];
+  if (y === 0 && touchAxis[player]) y = touchAxis[player];
 
-  return x;
+  return y;
 }
 
 // Botão de confirmar de qualquer fonte (menus). Edge-detect fica com o chamador.

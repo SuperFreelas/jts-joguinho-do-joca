@@ -1,10 +1,8 @@
-// Renderização do campo no canvas 2D. Desenha SEMPRE em unidades lógicas (FIELD.W x H);
-// o caller configura o transform de DPR antes (setupCanvas).
+// Renderização do campo no canvas 2D — PAISAGEM. Desenha SEMPRE em unidades lógicas
+// (FIELD.W x FIELD.H); o caller configura o transform de DPR antes (setupCanvas).
 
 import { FIELD, COLORS, PADDLE, BALL, TIMER } from '../data/constants.js';
 
-// Configura o canvas para DPR (nitidez em Retina/iPhone) e devolve o ctx
-// já escalado para desenhar em unidades lógicas.
 export function setupCanvas(canvas) {
   const dpr = window.devicePixelRatio || 1;
   canvas.width = Math.round(FIELD.W * dpr);
@@ -28,20 +26,19 @@ function roundRect(ctx, x, y, w, h, r) {
 
 function drawField(ctx) {
   const { W, H } = FIELD;
-  // gramado base
   ctx.fillStyle = COLORS.bg;
   ctx.fillRect(0, 0, W, H);
 
-  // listras horizontais alternadas
-  const stripes = 10;
-  const sh = H / stripes;
+  // listras verticais alternadas
+  const stripes = 12;
+  const sw = W / stripes;
   for (let i = 0; i < stripes; i++) {
     ctx.fillStyle = i % 2 === 0 ? COLORS.stripeA : COLORS.stripeB;
-    ctx.fillRect(0, i * sh, W, sh);
+    ctx.fillRect(i * sw, 0, sw, H);
   }
 
-  // refletor (luz de estádio)
-  const g = ctx.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, H * 0.6);
+  // refletor
+  const g = ctx.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, W * 0.55);
   g.addColorStop(0, COLORS.spotlight);
   g.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = g;
@@ -53,81 +50,81 @@ function drawField(ctx) {
   ctx.strokeStyle = COLORS.line;
   ctx.lineWidth = 2;
 
-  const m = 8; // margem da borda
+  const m = 8;
   ctx.strokeRect(m, m, W - 2 * m, H - 2 * m);
 
-  // linha central tracejada
+  // linha central vertical tracejada
   ctx.setLineDash([10, 10]);
   ctx.beginPath();
-  ctx.moveTo(m, H / 2);
-  ctx.lineTo(W - m, H / 2);
+  ctx.moveTo(W / 2, m);
+  ctx.lineTo(W / 2, H - m);
   ctx.stroke();
   ctx.setLineDash([]);
 
   // círculo central
   ctx.beginPath();
-  ctx.arc(W / 2, H / 2, 64, 0, Math.PI * 2);
+  ctx.arc(W / 2, H / 2, 70, 0, Math.PI * 2);
   ctx.stroke();
   ctx.beginPath();
   ctx.arc(W / 2, H / 2, 3, 0, Math.PI * 2);
   ctx.fillStyle = COLORS.line;
   ctx.fill();
 
-  // grandes e pequenas áreas (topo e base)
-  const baW = 220,
-    baH = 90,
-    paW = 120,
-    paH = 40;
-  // topo
-  ctx.strokeRect((W - baW) / 2, m, baW, baH);
-  ctx.strokeRect((W - paW) / 2, m, paW, paH);
-  // base
-  ctx.strokeRect((W - baW) / 2, H - m - baH, baW, baH);
-  ctx.strokeRect((W - paW) / 2, H - m - paH, paW, paH);
+  // grandes e pequenas áreas (esquerda e direita)
+  const baW = 90,
+    baH = 230,
+    paW = 40,
+    paH = 130;
+  // esquerda
+  ctx.strokeRect(m, (H - baH) / 2, baW, baH);
+  ctx.strokeRect(m, (H - paH) / 2, paW, paH);
+  // direita
+  ctx.strokeRect(W - m - baW, (H - baH) / 2, baW, baH);
+  ctx.strokeRect(W - m - paW, (H - paH) / 2, paW, paH);
 
   ctx.restore();
 
-  drawGoal(ctx, true); // topo
-  drawGoal(ctx, false); // base
+  drawGoal(ctx, true); // esquerda
+  drawGoal(ctx, false); // direita
 }
 
-function drawGoal(ctx, top) {
+function drawGoal(ctx, left) {
   const { W, H } = FIELD;
-  const gw = 150;
-  const gh = 18;
-  const x = (W - gw) / 2;
-  const y = top ? 0 : H - gh;
+  const gh = 170; // abertura (eixo Y)
+  const gd = 18; // profundidade (eixo X)
+  const y = (H - gh) / 2;
+  const x = left ? 0 : W - gd;
 
-  // rede
   ctx.save();
+  // rede
   ctx.strokeStyle = COLORS.net;
   ctx.lineWidth = 1;
-  for (let i = 0; i <= gw; i += 10) {
+  for (let i = 0; i <= gh; i += 10) {
     ctx.beginPath();
-    ctx.moveTo(x + i, y);
-    ctx.lineTo(x + i, y + gh);
+    ctx.moveTo(x, y + i);
+    ctx.lineTo(x + gd, y + i);
     ctx.stroke();
   }
-  for (let j = 0; j <= gh; j += 6) {
+  for (let j = 0; j <= gd; j += 6) {
     ctx.beginPath();
-    ctx.moveTo(x, y + j);
-    ctx.lineTo(x + gw, y + j);
+    ctx.moveTo(x + j, y);
+    ctx.lineTo(x + j, y + gh);
     ctx.stroke();
   }
   // traves
   ctx.strokeStyle = COLORS.post;
   ctx.lineWidth = 4;
   ctx.beginPath();
-  if (top) {
-    ctx.moveTo(x, y + gh);
+  if (left) {
+    ctx.moveTo(x + gd, y);
     ctx.lineTo(x, y);
-    ctx.lineTo(x + gw, y);
-    ctx.lineTo(x + gw, y + gh);
+    ctx.lineTo(x, y + gh);
+    ctx.lineTo(x + gd, y + gh);
   } else {
     ctx.moveTo(x, y);
+    ctx.lineTo(x + gd, y);
+    ctx.lineTo(x + gd, y + gh);
     ctx.lineTo(x, y + gh);
-    ctx.lineTo(x + gw, y + gh);
-    ctx.lineTo(x + gw, y);
   }
   ctx.stroke();
   ctx.restore();
@@ -165,19 +162,19 @@ function drawBall(ctx, ball, alpha = 1) {
 }
 
 function drawHUD(ctx, state) {
-  const { W, H } = FIELD;
+  const { W } = FIELD;
   const { score, timeLeft } = state;
 
-  // placar — p2 (cima) e p1 (baixo), nas laterais do meio
   ctx.save();
-  ctx.font = '800 40px "Baloo 2", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
+  // placar: esquerda (P2 azul) e direita (P1 amarelo), no topo
+  ctx.font = '800 40px "Baloo 2", sans-serif';
   ctx.fillStyle = COLORS.p2;
-  ctx.fillText(String(score.top), 40, H / 2 - 30);
+  ctx.fillText(String(score.left), W / 2 - 70, 34);
   ctx.fillStyle = COLORS.p1;
-  ctx.fillText(String(score.bottom), 40, H / 2 + 30);
+  ctx.fillText(String(score.right), W / 2 + 70, 34);
 
   // cronômetro central
   const warn = timeLeft <= TIMER.WARN_SECONDS;
@@ -185,7 +182,7 @@ function drawHUD(ctx, state) {
   ctx.font = '800 30px "Baloo 2", sans-serif';
   const mm = Math.floor(timeLeft / 60);
   const ss = String(Math.floor(timeLeft % 60)).padStart(2, '0');
-  ctx.fillText(`${mm}:${ss}`, W - 44, H / 2);
+  ctx.fillText(`${mm}:${ss}`, W / 2, 34);
   ctx.restore();
 }
 
@@ -200,24 +197,23 @@ function drawPowerMessage(ctx, msg) {
   if (!msg) return;
   ctx.save();
   ctx.globalAlpha = msg.alpha;
-  ctx.font = '800 36px "Baloo 2", sans-serif';
+  ctx.font = '800 40px "Baloo 2", sans-serif';
   ctx.textAlign = 'center';
   ctx.fillStyle = msg.color;
   ctx.shadowColor = msg.color;
   ctx.shadowBlur = 20;
-  ctx.fillText(msg.text, FIELD.W / 2, FIELD.H / 2 - 90);
+  ctx.fillText(msg.text, FIELD.W / 2, FIELD.H / 2 - 110);
   ctx.restore();
 }
 
-// Desenho de um frame completo.
 export function renderFrame(ctx, state) {
   drawField(ctx);
 
   const ballAlpha = state.ballAlpha ?? 1;
   drawBall(ctx, state.ball, ballAlpha);
 
-  drawPaddle(ctx, state.paddles.bottom, COLORS.p1);
-  drawPaddle(ctx, state.paddles.top, COLORS.p2);
+  drawPaddle(ctx, state.paddles.left, COLORS.p2);
+  drawPaddle(ctx, state.paddles.right, COLORS.p1);
 
   drawHUD(ctx, state);
 

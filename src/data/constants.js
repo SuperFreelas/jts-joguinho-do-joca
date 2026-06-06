@@ -4,11 +4,12 @@
 // Velocidades SEMPRE em px/TICK (tick fixo = 1000/60 ms). Nunca px/frame.
 // ===========================================================================
 
-// --- Campo (área lógica) ---
+// --- Campo (área lógica) — PAISAGEM (deitado para TV 16:9) ---
+// Gols nas laterais esquerda (P2 azul) e direita (P1 amarelo).
+// Bola viaja na horizontal; quica nas paredes de cima/baixo (y=0, y=H).
 export const FIELD = {
-  W: 480,
-  H: 800,
-  WALL: 0, // bola quica em x=0 e x=W
+  W: 854,
+  H: 480,
 };
 
 // --- Loop ---
@@ -33,13 +34,13 @@ export const COLORS = {
   hud: '#eafff2',
 };
 
-// --- Goleiros (paddles) ---
+// --- Goleiros (paddles) — barras VERTICAIS nas laterais ---
 export const PADDLE = {
-  W: 60,
-  H: 12,
+  LEN: 70, // comprimento (eixo Y)
+  THICK: 12, // espessura (eixo X)
   R: 6, // raio das bordas
-  SPEED: 6.5, // px/tick no input máximo
-  MARGIN_Y: 36, // distância da borda topo/base
+  SPEED: 6.5, // px/tick no input máximo (movimento vertical)
+  MARGIN_X: 30, // distância da borda esquerda/direita
 };
 
 // --- Bola ---

@@ -11,18 +11,19 @@ export default function ResultScreen({ result, onMenu }) {
     title = 'EMPATE!';
     sub = '🤝 Ninguém ganhou baller';
   } else if (mode === MODE.VS_CPU) {
-    sub = winner === 'bottom' ? '🏆 Você venceu!' : '🤖 A máquina venceu!';
+    // No VS Máquina o humano é o P1 (direita).
+    sub = winner === 'right' ? '🏆 Você venceu!' : '🤖 A máquina venceu!';
   } else {
-    sub = winner === 'bottom' ? '🟡 Jogador 1 venceu!' : '🔵 Jogador 2 venceu!';
+    sub = winner === 'right' ? '🟡 Jogador 1 venceu!' : '🔵 Jogador 2 venceu!';
   }
 
   return (
     <div className="screen">
       <h1 className="result-title">{title}</h1>
       <div className="result-score">
-        <span style={{ color: 'var(--p2)' }}>{score.top}</span>
+        <span style={{ color: 'var(--p2)' }}>{score.left}</span>
         {' × '}
-        <span style={{ color: 'var(--p1)' }}>{score.bottom}</span>
+        <span style={{ color: 'var(--p1)' }}>{score.right}</span>
       </div>
       <div className="result-sub">{sub}</div>
       <button className="btn btn--green" onClick={onMenu}>

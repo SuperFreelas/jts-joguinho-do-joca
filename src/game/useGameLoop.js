@@ -23,7 +23,7 @@ function freshState() {
   return {
     ball: spawnBall(),
     paddles: initialPaddles(),
-    score: { top: 0, bottom: 0 },
+    score: { left: 0, right: 0 },
     rallies: 0,
     timeLeft: TIMER.MATCH_SECONDS,
     elapsedMs: 0,
@@ -77,17 +77,17 @@ export function useGameLoop(canvasRef, { mode, onFinish }) {
       if (s.timeLeft <= 0 && !s.finished) {
         s.finished = true;
         runningRef.current = false;
-        const { top, bottom } = s.score;
-        const winner = top === bottom ? 'draw' : top > bottom ? 'top' : 'bottom';
+        const { left, right } = s.score;
+        const winner = left === right ? 'draw' : right > left ? 'right' : 'left';
         onFinish && onFinish({ winner, score: { ...s.score }, mode });
         return;
       }
 
       // --- Input dos goleiros ---
-      const p1 = readPlayerAxis(0); // baixo
-      let p2 = mode === MODE.VS_CPU ? aiAxis(s) : readPlayerAxis(1); // cima
-      movePaddle(s.paddles.bottom, p1);
-      movePaddle(s.paddles.top, p2);
+      const p1 = readPlayerAxis(0); // P1 = goleiro da direita (amarelo)
+      const p2 = mode === MODE.VS_CPU ? aiAxis(s) : readPlayerAxis(1); // P2 = esquerda (azul)
+      movePaddle(s.paddles.right, p1);
+      movePaddle(s.paddles.left, p2);
 
       // --- Física da bola ---
       const ev = stepBall(s.ball, s.paddles);
