@@ -114,5 +114,6 @@ export const SCREEN = {
   GAME: 'GAME',
   RESULT: 'RESULT',
   BALLER: 'BALLER',
+  ALBUMS: 'ALBUMS',
   ALBUM: 'ALBUM',
 };

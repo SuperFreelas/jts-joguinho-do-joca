@@ -364,50 +364,157 @@ canvas.field {
   margin: 0 0 8px;
   max-width: 560px;
 }
-.setup-names {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin: 6px 0 10px;
-}
-.setup-name-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  padding: 6px 10px;
-}
-.setup-name-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  flex: 0 0 auto;
-}
 .setup-name-input {
   font-family: 'Baloo 2', sans-serif;
-  font-weight: 700;
-  font-size: 18px;
+  font-weight: 800;
+  font-size: 16px;
   color: var(--text);
-  background: transparent;
-  border: none;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
   outline: none;
-  width: 140px;
+  width: 100%;
+  padding: 6px 8px;
+  text-align: center;
 }
 .setup-name-input::placeholder {
   color: rgba(234, 255, 242, 0.4);
 }
-.setup-vs {
+
+/* arena: coluna esquerda (P2) | campo | coluna direita (P1) */
+.setup-arena {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 1000px;
+}
+.setup-col {
+  flex: 0 0 150px;
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 12px;
+  padding: 8px;
+}
+.setup-col--left {
+  background: rgba(51, 153, 255, 0.08);
+  border: 1px solid rgba(51, 153, 255, 0.3);
+}
+.setup-col--right {
+  background: rgba(255, 204, 0, 0.08);
+  border: 1px solid rgba(255, 204, 0, 0.3);
+}
+.setup-col--cpu {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  align-items: center;
+  justify-content: center;
+}
+.setup-cpu-label {
   font-weight: 800;
-  font-size: 18px;
+  font-size: 22px;
   color: var(--line);
 }
+.setup-col-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.setup-col-count {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--gold);
+  flex: 0 0 auto;
+}
+.setup-col-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+.setup-col-empty {
+  font-size: 12px;
+  color: var(--line);
+  opacity: 0.7;
+  text-align: center;
+  padding: 12px 4px;
+}
+.setup-acard {
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 4px 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+}
+.setup-acard--armed {
+  border-color: var(--gold);
+  background: rgba(255, 215, 0, 0.18);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+.setup-acard-name {
+  line-height: 1.05;
+  overflow: hidden;
+}
+
+/* avatar circular reutilizável (avatar recortado + badge que vaza) */
+.av-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+.av-wrap--sm {
+  width: 30px;
+  height: 30px;
+}
+.av-circle {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #0d2818;
+}
+.av-circle svg {
+  position: absolute;
+  width: 150%;
+  height: auto;
+  left: 50%;
+  top: 8%;
+  transform: translateX(-50%);
+}
+.av-badge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #fff;
+  z-index: 2;
+}
+
+/* campo central */
 .setup-field {
   position: relative;
-  width: min(92vw, 700px);
+  flex: 1 1 auto;
+  align-self: center;
+  max-width: 640px;
   aspect-ratio: 854 / 480;
   background: linear-gradient(90deg, #1a4d2e, #164428);
   border: 2px solid rgba(136, 204, 170, 0.5);
@@ -425,11 +532,11 @@ canvas.field {
 }
 .setup-half--left {
   left: 0;
-  background: rgba(51, 153, 255, 0.1);
+  background: rgba(51, 153, 255, 0.12);
 }
 .setup-half--right {
   right: 0;
-  background: rgba(255, 204, 0, 0.1);
+  background: rgba(255, 204, 0, 0.12);
 }
 .setup-centerline {
   position: absolute;
@@ -444,62 +551,38 @@ canvas.field {
   width: 11%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
-  border-radius: 50%;
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5));
+}
+.setup-legend .av-circle {
   border: 3px solid var(--gold);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: clamp(16px, 4vw, 26px);
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4);
 }
-.setup-pickers {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  justify-content: center;
-  width: min(92vw, 700px);
-  margin: 10px 0;
+.setup-legend .av-circle svg {
+  top: 6%;
 }
-.setup-picker {
-  flex: 1;
-  min-width: 200px;
+.setup-legend .av-badge {
+  right: -2px;
+  bottom: -2px;
+  width: 42%;
+  height: 42%;
+  font-size: 11px;
 }
-.setup-picker-label {
-  font-weight: 800;
-  font-size: 16px;
-  margin-bottom: 6px;
-}
-.setup-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: center;
-  max-height: 96px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 2px;
-}
-.setup-chip {
-  font-family: inherit;
-  font-weight: 700;
-  font-size: 13px;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.07);
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-radius: 999px;
-  padding: 6px 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.setup-chip--armed {
-  border-color: var(--gold);
-  background: rgba(255, 215, 0, 0.18);
-  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
-}
-.setup-chip-emoji {
-  font-size: 16px;
+
+/* telas estreitas: empilha colunas abaixo do campo */
+@media (max-width: 640px) {
+  .setup-arena {
+    flex-wrap: wrap;
+  }
+  .setup-field {
+    order: -1;
+    flex: 1 0 100%;
+    max-width: 100%;
+  }
+  .setup-col {
+    flex: 1 1 45%;
+  }
+  .setup-col-chips {
+    max-height: 150px;
+  }
 }
 
 /* ---------- Baller (abrir figurinha) ---------- */
@@ -682,6 +765,51 @@ canvas.field {
   height: 83px;
   border-radius: 50% 50% 45% 45%;
   background: #14241a;
+}
+
+/* ---------- Álbuns (lista de jogadores) ---------- */
+.albums-empty {
+  color: var(--line);
+  max-width: 360px;
+  margin: 24px 12px;
+  font-size: 16px;
+}
+.albums-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(92vw, 420px);
+  margin-top: 10px;
+}
+.albums-item {
+  font-family: inherit;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 14px 18px;
+  cursor: pointer;
+  color: var(--text);
+}
+.albums-item:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+.albums-item-name {
+  font-weight: 800;
+  font-size: 20px;
+}
+.albums-item-count {
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--gold);
+}
+.baller-owner {
+  font-weight: 800;
+  font-size: clamp(16px, 4vw, 22px);
+  color: var(--gold);
+  margin-bottom: 10px;
 }
 
 /* ---------- Animations ---------- */

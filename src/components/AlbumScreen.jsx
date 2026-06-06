@@ -5,14 +5,14 @@ import { POWERS } from '../data/powers.js';
 
 // Álbum de colecionáveis: progresso X/30, seções por raridade, grid 4 col.
 // Coletado = avatar+nome(+poder); não coletado = silhueta "???". Scroll só aqui.
-export default function AlbumScreen({ collection, onBack }) {
+export default function AlbumScreen({ collection, playerName, onBack }) {
   const owned = new Set(collection.owned || []);
   const count = owned.size;
   const pct = Math.round((count / TOTAL_PLAYERS) * 100);
 
   return (
     <div className="screen screen--scroll album-screen">
-      <h1 className="album-title">🏆 Meu Álbum</h1>
+      <h1 className="album-title">🏆 Álbum {playerName ? `— ${playerName}` : ''}</h1>
       <div className="album-progress">
         <div className="album-progress-bar">
           <div className="album-progress-fill" style={{ width: `${pct}%` }} />

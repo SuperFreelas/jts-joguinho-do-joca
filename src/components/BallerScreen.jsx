@@ -5,7 +5,7 @@ import { RARITY } from '../data/constants.js';
 import { POWERS } from '../data/powers.js';
 
 // Abre um baller: giro 3D (~1.8s) -> reveal com shine. Sorteia uma única vez.
-export default function BallerScreen({ collection, onCollected }) {
+export default function BallerScreen({ collection, winnerName, onCollected }) {
   const drawRef = useRef(null);
   if (drawRef.current === null) drawRef.current = drawBaller(collection);
   const draw = drawRef.current;
@@ -24,6 +24,7 @@ export default function BallerScreen({ collection, onCollected }) {
 
   return (
     <div className="screen baller-screen">
+      {winnerName && <div className="baller-owner">🎁 Baller de {winnerName}</div>}
       <div className="baller-stage">
         <div
           className={`baller-card ${phase === 'spinning' ? 'baller-card--spinning' : 'baller-card--revealed'}`}

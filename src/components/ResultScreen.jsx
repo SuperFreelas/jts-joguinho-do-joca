@@ -6,12 +6,15 @@ export default function ResultScreen({ result, names, onMenu, onOpenBaller }) {
   const { winner, score, mode } = result;
   const nm = names || { right: 'Jogador 1', left: 'Jogador 2' };
 
+  const cpuWon = mode === MODE.VS_CPU && winner === 'left';
+  const canBaller = winner !== 'draw' && !cpuWon;
+
   let title = 'GOOOL!';
   let sub;
   if (winner === 'draw') {
     title = 'EMPATE!';
     sub = '🤝 Ninguém ganhou baller';
-  } else if (mode === MODE.VS_CPU && winner === 'left') {
+  } else if (cpuWon) {
     sub = '🤖 A máquina venceu!';
   } else {
     const who = winner === 'right' ? nm.right : nm.left;
@@ -27,11 +30,7 @@ export default function ResultScreen({ result, names, onMenu, onOpenBaller }) {
         <span style={{ color: 'var(--p1)' }}>{score.right}</span>
       </div>
       <div className="result-sub">{sub}</div>
-      {winner === 'draw' ? (
-        <button className="btn btn--green" onClick={onMenu}>
-          🔄 Jogar de novo!
-        </button>
-      ) : (
+      {canBaller ? (
         <>
           <button className="btn btn--shake" onClick={onOpenBaller}>
             ⚽ ABRIR BALLER!
@@ -40,6 +39,10 @@ export default function ResultScreen({ result, names, onMenu, onOpenBaller }) {
             🏠 Menu
           </button>
         </>
+      ) : (
+        <button className="btn btn--green" onClick={onMenu}>
+          🔄 Jogar de novo!
+        </button>
       )}
     </div>
   );
