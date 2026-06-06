@@ -1,7 +1,7 @@
 // Renderização do campo no canvas 2D — PAISAGEM. Desenha SEMPRE em unidades lógicas
 // (FIELD.W x FIELD.H); o caller configura o transform de DPR antes (setupCanvas).
 
-import { FIELD, COLORS, PADDLE, BALL, TIMER, GOAL } from '../data/constants.js';
+import { FIELD, COLORS, PADDLE, BALL, GOAL } from '../data/constants.js';
 
 export function setupCanvas(canvas) {
   const dpr = window.devicePixelRatio || 1;
@@ -232,30 +232,8 @@ function drawBall(ctx, ball, alpha = 1) {
   ctx.restore();
 }
 
-function drawHUD(ctx, state) {
-  const { W } = FIELD;
-  const { score, timeLeft } = state;
-
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  // placar: esquerda (P2 azul) e direita (P1 amarelo), no topo
-  ctx.font = '800 40px "Baloo 2", sans-serif';
-  ctx.fillStyle = COLORS.p2;
-  ctx.fillText(String(score.left), W / 2 - 70, 34);
-  ctx.fillStyle = COLORS.p1;
-  ctx.fillText(String(score.right), W / 2 + 70, 34);
-
-  // cronômetro central
-  const warn = timeLeft <= TIMER.WARN_SECONDS;
-  ctx.fillStyle = warn ? COLORS.timerWarn : COLORS.hud;
-  ctx.font = '800 30px "Baloo 2", sans-serif';
-  const mm = Math.floor(timeLeft / 60);
-  const ss = String(Math.floor(timeLeft % 60)).padStart(2, '0');
-  ctx.fillText(`${mm}:${ss}`, W / 2, 34);
-  ctx.restore();
-}
+// Placar/cronômetro agora vivem num overlay HTML (Scoreboard.jsx) — fica nítido
+// e com visual de transmissão de TV.
 
 function drawGoalFlash(ctx, alpha) {
   ctx.save();
@@ -285,8 +263,6 @@ export function renderFrame(ctx, state) {
 
   drawPaddle(ctx, state.paddles.left, COLORS.p2);
   drawPaddle(ctx, state.paddles.right, COLORS.p1);
-
-  drawHUD(ctx, state);
 
   if (state.goalFlashAlpha > 0) drawGoalFlash(ctx, state.goalFlashAlpha);
   drawPowerMessage(ctx, state.powerMessage);

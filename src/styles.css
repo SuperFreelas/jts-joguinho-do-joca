@@ -160,6 +160,84 @@ canvas.field {
   border-radius: 6px;
 }
 
+/* ---------- Scoreboard (estilo transmissão de TV) ---------- */
+.scoreboard {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: stretch;
+  height: 46px;
+  border-radius: 10px;
+  overflow: hidden;
+  font-family: 'Baloo 2', sans-serif;
+  background: linear-gradient(180deg, #11271b 0%, #0a1810 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  user-select: none;
+  pointer-events: none;
+}
+.scoreboard > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sb-tab {
+  width: 7px;
+}
+.sb-tab--left {
+  background: var(--p2);
+  box-shadow: 0 0 12px var(--p2);
+}
+.sb-tab--right {
+  background: var(--p1);
+  box-shadow: 0 0 12px var(--p1);
+}
+.sb-name {
+  padding: 0 12px;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: 1px;
+  color: #eafff2;
+  background: rgba(255, 255, 255, 0.04);
+}
+.sb-score {
+  min-width: 42px;
+  font-weight: 800;
+  font-size: 26px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.28);
+  font-variant-numeric: tabular-nums;
+}
+.sb-timer {
+  min-width: 78px;
+  padding: 0 6px;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: #06160d;
+  background: linear-gradient(180deg, #ffe680, #ffb300);
+  font-variant-numeric: tabular-nums;
+  transition: background 0.2s, color 0.2s;
+}
+.sb-timer--warn {
+  color: #fff;
+  background: linear-gradient(180deg, #ff6b6b, #e02424);
+  animation: sb-pulse 0.7s ease-in-out infinite;
+}
+@keyframes sb-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.35); }
+}
+@media (max-width: 520px) {
+  .scoreboard { height: 38px; }
+  .sb-name { font-size: 14px; padding: 0 8px; }
+  .sb-score { font-size: 20px; min-width: 32px; }
+  .sb-timer { font-size: 16px; min-width: 60px; }
+}
+
 /* reconnect overlay */
 .overlay {
   position: absolute;

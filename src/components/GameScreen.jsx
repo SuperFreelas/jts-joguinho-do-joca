@@ -3,6 +3,7 @@ import { FIELD, MODE } from '../data/constants.js';
 import { useGameLoop } from '../game/useGameLoop.js';
 import { gamepadStatus, onGamepadChange } from '../game/input.js';
 import TouchControls from './TouchControls.jsx';
+import Scoreboard from './Scoreboard.jsx';
 
 // Tela de jogo: canvas escalado para caber (transform via ResizeObserver),
 // overlay de reconexão de controle, e touch controls no mobile.
@@ -12,7 +13,7 @@ export default function GameScreen({ mode, onFinish }) {
   const scalerRef = useRef(null);
   const [needGamepad, setNeedGamepad] = useState(false);
 
-  useGameLoop(canvasRef, { mode, onFinish });
+  const stateRef = useGameLoop(canvasRef, { mode, onFinish });
 
   // Escala o campo (480x800 lógico) para caber na área disponível.
   useEffect(() => {
@@ -59,6 +60,8 @@ export default function GameScreen({ mode, onFinish }) {
         <canvas className="field" ref={canvasRef} width={FIELD.W} height={FIELD.H} />
         <TouchControls mode={mode} />
       </div>
+
+      <Scoreboard stateRef={stateRef} mode={mode} />
 
       {needGamepad && (
         <div className="overlay">
