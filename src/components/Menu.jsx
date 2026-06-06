@@ -3,7 +3,7 @@ import { MODE } from '../data/constants.js';
 
 // Menu principal. No 1º Tempo: 2 Jogadores ativo; VS Máquina e Álbum desabilitados
 // (entram nas fases seguintes), mas já presentes para o roteamento ficar completo.
-export default function Menu({ onStart, collectionCount = 0 }) {
+export default function Menu({ onStart, onOpenAlbum, collectionCount = 0 }) {
   return (
     <div className="screen">
       <h1 className="logo">GOL A GOL</h1>
@@ -16,7 +16,7 @@ export default function Menu({ onStart, collectionCount = 0 }) {
       <button className="btn btn--blue btn--disabled" disabled title="Em breve (Prorrogação)">
         🤖 VS MÁQUINA
       </button>
-      <button className="btn btn--gold btn--disabled" disabled title="Em breve (2º Tempo)">
+      <button className="btn btn--gold" onClick={onOpenAlbum}>
         🏆 Meu Álbum ({collectionCount}/30)
       </button>
 
