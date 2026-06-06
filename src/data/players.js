@@ -8,13 +8,13 @@ export const PLAYERS = [
   { name: 'Mbappé', rarity: 'LENDARIO', number: 9, power: 'SUPER_GOLEIRO' },
   { name: 'Cristiano Ronaldo', rarity: 'LENDARIO', number: 7, power: 'SUPER_TRAVA' },
 
-  // 🔥 ÉPICO (15%)
-  { name: 'Bellingham', rarity: 'EPICO', number: 5 },
-  { name: 'Lamine Yamal', rarity: 'EPICO', number: 19 },
-  { name: 'Endrick', rarity: 'EPICO', number: 9 },
-  { name: 'Saka', rarity: 'EPICO', number: 7 },
-  { name: 'Raphinha', rarity: 'EPICO', number: 11 },
-  { name: 'Salah', rarity: 'EPICO', number: 11 },
+  // 🔥 ÉPICO (15%) — cada um com seu poder
+  { name: 'Bellingham', rarity: 'EPICO', number: 5, power: 'TURBO' },
+  { name: 'Lamine Yamal', rarity: 'EPICO', number: 19, power: 'CURVAO' },
+  { name: 'Endrick', rarity: 'EPICO', number: 9, power: 'GOL_DUPLO' },
+  { name: 'Saka', rarity: 'EPICO', number: 7, power: 'MINI_BOLA' },
+  { name: 'Raphinha', rarity: 'EPICO', number: 11, power: 'IMA' },
+  { name: 'Salah', rarity: 'EPICO', number: 11, power: 'TELEGUIADO' },
 
   // 💎 RARO (30%)
   { name: 'Palmer', rarity: 'RARO', number: 20 },

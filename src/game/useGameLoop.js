@@ -51,8 +51,11 @@ function freshState(placements) {
       x: p.x,
       y: p.y,
       r: 24,
-      power: p.power,
+      power: p.power, // pode ser undefined (bloqueador)
       owner: p.owner, // 'left' | 'right'
+      rarity: p.rarity,
+      number: p.number,
+      name: p.name,
       cooldown: 0,
       flash: 0,
     })),
@@ -60,6 +63,11 @@ function freshState(placements) {
       invisibleTicks: 0,
       superGoalie: { left: 0, right: 0 },
       freeze: { left: 0, right: 0 },
+      slow: { left: 0, right: 0 }, // Ímã
+      curve: { ticks: 0, dir: 1, angle: 0 }, // Curvão
+      homing: { ticks: 0, tx: 0, ty: 0, k: 0 }, // Teleguiado
+      miniBallTicks: 0, // Mini Bola
+      doubleGoal: { left: false, right: false }, // Gol Duplo
     },
     particles: [],
   };
@@ -146,6 +154,14 @@ export function useGameLoop(canvasRef, { mode, onFinish, placements }) {
       if (ef.superGoalie.right > 0) ef.superGoalie.right -= 1;
       if (ef.freeze.left > 0) ef.freeze.left -= 1;
       if (ef.freeze.right > 0) ef.freeze.right -= 1;
+      if (ef.slow.left > 0) ef.slow.left -= 1;
+      if (ef.slow.right > 0) ef.slow.right -= 1;
+      if (ef.curve.ticks > 0) ef.curve.ticks -= 1;
+      if (ef.homing.ticks > 0) ef.homing.ticks -= 1;
+      if (ef.miniBallTicks > 0) {
+        ef.miniBallTicks -= 1;
+        if (ef.miniBallTicks === 0) s.ball.radius = BALL.R; // restaura
+      }
 
       // Tamanho dos goleiros (Super Goleiro)
       applyPaddleSize('left');
@@ -154,26 +170,54 @@ export function useGameLoop(canvasRef, { mode, onFinish, placements }) {
       // Alpha da bola (Bola Invisível)
       s.ball.alpha = ef.invisibleTicks > 0 ? POWERS.BOLA_INVISIVEL.ballAlpha : 1;
 
-      // Input dos goleiros (congelado não se move)
+      // Input dos goleiros (congelado não se move; Ímã deixa lento)
       const p1 = readPlayerAxis(0); // direita (amarelo)
       const p2 = mode === MODE.VS_CPU ? aiAxis(s) : readPlayerAxis(1); // esquerda (azul)
-      if (ef.freeze.right <= 0) movePaddle(s.paddles.right, p1);
-      if (ef.freeze.left <= 0) movePaddle(s.paddles.left, p2);
+      if (ef.freeze.right <= 0) movePaddle(s.paddles.right, p1, ef.slow.right > 0 ? 0.45 : 1);
+      if (ef.freeze.left <= 0) movePaddle(s.paddles.left, p2, ef.slow.left > 0 ? 0.45 : 1);
+
+      // Curvão: rotaciona a velocidade da bola (mantém o módulo)
+      if (ef.curve.ticks > 0) {
+        const a = ef.curve.angle * ef.curve.dir;
+        const cos = Math.cos(a);
+        const sin = Math.sin(a);
+        const vx = s.ball.vx * cos - s.ball.vy * sin;
+        const vy = s.ball.vx * sin + s.ball.vy * cos;
+        s.ball.vx = vx;
+        s.ball.vy = vy;
+      }
+      // Teleguiado: mira o gol adversário (mantém o módulo)
+      if (ef.homing.ticks > 0) {
+        const sp = ballSpeed(s.ball);
+        const dx = ef.homing.tx - s.ball.x;
+        const dy = ef.homing.ty - s.ball.y;
+        const dlen = Math.hypot(dx, dy) || 1;
+        s.ball.vx += (dx / dlen) * sp * ef.homing.k;
+        s.ball.vy += (dy / dlen) * sp * ef.homing.k;
+        setBallSpeed(s.ball, sp);
+      }
 
       // Física da bola
       const ev = stepBall(s.ball, s.paddles);
       if (ev.type === 'save') {
         s.rallies += 1;
         applyRallyBoost(s.ball, s.rallies);
-        s.ball.fire = false; // Super Chute dura 1 trajetória
+        s.ball.fire = false; // Super Chute/Turbo duram 1 trajetória
       } else if (ev.type === 'goal') {
-        s.score[ev.scorer] += 1;
+        const pts = ef.doubleGoal[ev.scorer] ? 2 : 1; // Gol Duplo
+        s.score[ev.scorer] += pts;
+        ef.doubleGoal[ev.scorer] = false;
         s.goalPauseMs = TIMER.GOAL_PAUSE_MS;
         s.goalFlashMs = TIMER.GOAL_FLASH_MS;
         s.ball.vx = 0;
         s.ball.vy = 0;
         s.ball.fire = false;
         s.particles.length = 0;
+        // limpa efeitos ligados à bola
+        ef.curve.ticks = 0;
+        ef.homing.ticks = 0;
+        ef.miniBallTicks = 0;
+        s.ball.radius = BALL.R;
       } else {
         // Colisão com lendários (atravessa se invisível)
         const hit = collideLegends(s.ball, s.legends, { passThrough: ef.invisibleTicks > 0 });

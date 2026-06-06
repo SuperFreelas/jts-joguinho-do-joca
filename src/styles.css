@@ -430,6 +430,10 @@ canvas.field {
   flex-wrap: wrap;
   gap: 6px;
   justify-content: center;
+  max-height: 96px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px;
 }
 .setup-chip {
   font-family: inherit;

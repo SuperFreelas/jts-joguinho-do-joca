@@ -1,7 +1,7 @@
 // Renderização do campo no canvas 2D — PAISAGEM. Desenha SEMPRE em unidades lógicas
 // (FIELD.W x FIELD.H); o caller configura o transform de DPR antes (setupCanvas).
 
-import { FIELD, COLORS, PADDLE, BALL, GOAL } from '../data/constants.js';
+import { FIELD, COLORS, PADDLE, BALL, GOAL, RARITY } from '../data/constants.js';
 import { POWERS } from '../data/powers.js';
 
 let frameCount = 0; // para animações pulsantes
@@ -172,27 +172,34 @@ function drawPaddle(ctx, paddle, color, opts = {}) {
 function drawLegends(ctx, legends) {
   for (const lg of legends) {
     const power = POWERS[lg.power];
-    if (!power) continue;
+    const hasPower = !!power;
+    const fill = hasPower ? power.color : (RARITY[lg.rarity] || RARITY.COMUM).color;
     ctx.save();
     // corpo
-    ctx.shadowColor = power.color;
-    ctx.shadowBlur = 14;
-    ctx.fillStyle = power.color;
+    ctx.shadowColor = fill;
+    ctx.shadowBlur = hasPower ? 14 : 8;
+    ctx.fillStyle = fill;
     ctx.beginPath();
     ctx.arc(lg.x, lg.y, lg.r, 0, Math.PI * 2);
     ctx.fill();
-    // borda dourada
+    // borda: dourada (com poder) ou clara (bloqueador)
     ctx.shadowBlur = 0;
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = hasPower ? 3 : 2;
+    ctx.strokeStyle = hasPower ? '#FFD700' : 'rgba(255,255,255,0.6)';
     ctx.beginPath();
     ctx.arc(lg.x, lg.y, lg.r, 0, Math.PI * 2);
     ctx.stroke();
-    // emoji do poder
-    ctx.font = `${Math.round(lg.r * 1.1)}px sans-serif`;
+    // conteúdo: emoji do poder OU número da camisa
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(power.emoji, lg.x, lg.y + 1);
+    if (hasPower) {
+      ctx.font = `${Math.round(lg.r * 1.1)}px sans-serif`;
+      ctx.fillText(power.emoji, lg.x, lg.y + 1);
+    } else {
+      ctx.font = `800 ${Math.round(lg.r * 0.9)}px "Baloo 2", sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(String(lg.number ?? ''), lg.x, lg.y + 1);
+    }
     // flash branco ao ser atingido
     if (lg.flash > 0) {
       ctx.globalAlpha = (lg.flash / 12) * 0.85;
@@ -234,7 +241,7 @@ function blackPentagon(ctx, cx, cy, rr, rotation) {
 
 // Bola de fogo (Super Chute).
 function drawFireBall(ctx, ball, alpha) {
-  const R = BALL.R * 1.15;
+  const R = (ball.radius || BALL.R) * 1.15;
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.shadowColor = '#ff3b00';
@@ -256,7 +263,7 @@ function drawBall(ctx, ball, alpha = 1) {
     drawFireBall(ctx, ball, alpha);
     return;
   }
-  const R = BALL.R;
+  const R = ball.radius || BALL.R;
   ctx.save();
   ctx.globalAlpha = alpha;
 

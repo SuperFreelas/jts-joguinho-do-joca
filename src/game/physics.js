@@ -30,6 +30,7 @@ export function spawnBall(rng = Math.random) {
     vx: Math.cos(angle) * speed * dir,
     vy: Math.sin(angle) * speed,
     rot: 0, // rotação visual (gira conforme rola)
+    radius: BALL.R, // raio dinâmico (Mini Bola altera)
   };
 }
 
@@ -50,7 +51,7 @@ function reflectOffPaddle(ball, paddle, dir, rng) {
 // Retorna: { type: 'none'|'save'|'goal', side?, scorer? }
 export function stepBall(ball, paddles, opts = {}) {
   const rng = opts.rng || Math.random;
-  const r = BALL.R;
+  const r = ball.radius || BALL.R;
   const prevX = ball.x;
 
   ball.x += ball.vx;
@@ -130,8 +131,9 @@ export function initialPaddles() {
 }
 
 // Move um paddle verticalmente por um delta de input (-1 cima .. +1 baixo).
-export function movePaddle(paddle, input) {
-  paddle.y += input * PADDLE.SPEED;
+// speedMul reduz a velocidade (Ímã deixa o goleiro lento).
+export function movePaddle(paddle, input, speedMul = 1) {
+  paddle.y += input * PADDLE.SPEED * speedMul;
   const half = paddle.h / 2;
   paddle.y = clamp(paddle.y, half, FIELD.H - half);
 }
@@ -148,7 +150,7 @@ export function collideLegends(ball, legends, opts = {}) {
     const dx = ball.x - lg.x;
     const dy = ball.y - lg.y;
     const dist = Math.hypot(dx, dy);
-    const minDist = lg.r + BALL.R;
+    const minDist = lg.r + (ball.radius || BALL.R);
     if (dist <= minDist && dist > 0) {
       // normal
       const nx = dx / dist;
