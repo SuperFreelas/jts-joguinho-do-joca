@@ -2,19 +2,20 @@ import { MODE } from '../data/constants.js';
 
 // Tela de resultado. No 1º Tempo: placar + vencedor + voltar ao menu.
 // (Baller entra no 2º Tempo.)
-export default function ResultScreen({ result, onMenu, onOpenBaller }) {
+export default function ResultScreen({ result, names, onMenu, onOpenBaller }) {
   const { winner, score, mode } = result;
+  const nm = names || { right: 'Jogador 1', left: 'Jogador 2' };
 
   let title = 'GOOOL!';
   let sub;
   if (winner === 'draw') {
     title = 'EMPATE!';
     sub = '🤝 Ninguém ganhou baller';
-  } else if (mode === MODE.VS_CPU) {
-    // No VS Máquina o humano é o P1 (direita).
-    sub = winner === 'right' ? '🏆 Você venceu!' : '🤖 A máquina venceu!';
+  } else if (mode === MODE.VS_CPU && winner === 'left') {
+    sub = '🤖 A máquina venceu!';
   } else {
-    sub = winner === 'right' ? '🟡 Jogador 1 venceu!' : '🔵 Jogador 2 venceu!';
+    const who = winner === 'right' ? nm.right : nm.left;
+    sub = `🏆 ${who} venceu!`;
   }
 
   return (

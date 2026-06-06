@@ -1,18 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { PLAYERS, PLAYERS_BY_NAME } from '../data/players.js';
 import { POWERS } from '../data/powers.js';
 import { FIELD, LEGEND, MODE, RARITY, RARITY_ORDER } from '../data/constants.js';
+import { loadNames, saveNames } from '../collection/storage.js';
 
-// Tela de posicionamento: cada jogador escala até 2 jogadores da SUA coleção e
-// toca/clica na sua metade do campo para posicionar. Lendários/épicos têm poder;
-// comuns/raros entram como bloqueadores. Toque num posicionado para remover.
-// Auto-pula se a coleção estiver vazia.
+// Pré-jogo: nomes dos jogadores + escalação (até 2 cada) da coleção.
+// Lendários/épicos têm poder; comuns/raros são bloqueadores. Toggle pra remover.
 export default function SetupScreen({ mode, collection, onReady }) {
   const owned = new Set(collection?.owned || []);
-  // todos os jogadores da coleção, ordenados por raridade
   const ownedPlayers = RARITY_ORDER.flatMap((rk) =>
     PLAYERS.filter((p) => p.rarity === rk && owned.has(p.name)),
   );
+  const hasFieldables = ownedPlayers.length > 0;
 
   const players =
     mode === MODE.VS_CPU
@@ -22,16 +21,12 @@ export default function SetupScreen({ mode, collection, onReady }) {
           { key: 'left', label: '🔵 Jogador 2', color: 'var(--p2)' },
         ];
 
+  const saved = loadNames();
+  const [names, setNames] = useState({ right: saved.right, left: saved.left });
   const [placements, setPlacements] = useState([]);
-  const [armed, setArmed] = useState(null); // { owner, name }
+  const [armed, setArmed] = useState(null);
   const fieldRef = useRef(null);
   const idRef = useRef(0);
-
-  useEffect(() => {
-    if (ownedPlayers.length === 0) onReady([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  if (ownedPlayers.length === 0) return null;
 
   const zoneFor = (owner) => {
     const cx = FIELD.W / 2;
@@ -46,7 +41,6 @@ export default function SetupScreen({ mode, collection, onReady }) {
     const rect = fieldRef.current.getBoundingClientRect();
     const px = ((e.clientX - rect.left) / rect.width) * FIELD.W;
     const py = ((e.clientY - rect.top) / rect.height) * FIELD.H;
-
     const hitIdx = placements.findIndex((p) => Math.hypot(p.x - px, p.y - py) <= LEGEND.R + 6);
     if (hitIdx >= 0) {
       setPlacements(placements.filter((_, i) => i !== hitIdx));
@@ -67,8 +61,19 @@ export default function SetupScreen({ mode, collection, onReady }) {
     ]);
   };
 
-  const start = () =>
-    onReady(placements.map(({ x, y, power, owner, rarity, number, name }) => ({ x, y, power, owner, rarity, number, name })));
+  const start = () => {
+    const finalNames =
+      mode === MODE.VS_CPU
+        ? { right: names.right.trim() || 'Você', left: 'CPU' }
+        : { right: names.right.trim() || 'Jogador 1', left: names.left.trim() || 'Jogador 2' };
+    saveNames({ right: mode === MODE.VS_CPU ? names.right : names.right, left: mode === MODE.VS_CPU ? names.left : names.left });
+    onReady({
+      names: finalNames,
+      placements: placements.map(({ x, y, power, owner, rarity, number, name }) => ({
+        x, y, power, owner, rarity, number, name,
+      })),
+    });
+  };
 
   const markerStyle = (p) => {
     const power = POWERS[p.power];
@@ -82,58 +87,80 @@ export default function SetupScreen({ mode, collection, onReady }) {
 
   return (
     <div className="screen setup-screen">
-      <h1 className="setup-title">⚽ Escale seu Time</h1>
-      <p className="setup-hint">
-        Escolha 2 jogadores e toque na sua metade do campo. 👑 Lendários e 🔥 épicos têm poder; os
-        outros só rebatem. Toque de novo pra remover.
-      </p>
+      <h1 className="setup-title">⚽ Quem vai jogar?</h1>
 
-      <div
-        className="setup-field"
-        ref={fieldRef}
-        onClick={onFieldClick}
-        onTouchStart={(e) => {
-          e.preventDefault();
-          const t = e.changedTouches[0];
-          onFieldClick({ clientX: t.clientX, clientY: t.clientY });
-        }}
-      >
-        <div className="setup-half setup-half--left" />
-        <div className="setup-half setup-half--right" />
-        <div className="setup-centerline" />
-        {placements.map((p) => (
-          <div key={p.id} className="setup-legend" style={markerStyle(p)}>
-            {POWERS[p.power] ? POWERS[p.power].emoji : p.number}
-          </div>
-        ))}
-      </div>
-
-      <div className="setup-pickers">
+      {/* Nomes */}
+      <div className="setup-names">
         {players.map((pl) => (
-          <div key={pl.key} className="setup-picker">
-            <div className="setup-picker-label" style={{ color: pl.color }}>
-              {pl.label} ({countFor(pl.key)}/{LEGEND.MAX_PER_PLAYER})
-            </div>
-            <div className="setup-chips">
-              {ownedPlayers.map((p) => {
-                const isArmed = armed && armed.owner === pl.key && armed.name === p.name;
-                const power = POWERS[p.power];
-                const icon = power ? power.emoji : RARITY[p.rarity].emoji;
-                return (
-                  <button
-                    key={p.name}
-                    className={`setup-chip ${isArmed ? 'setup-chip--armed' : ''}`}
-                    onClick={() => setArmed({ owner: pl.key, name: p.name })}
-                  >
-                    <span className="setup-chip-emoji">{icon}</span>
-                    {p.name}
-                  </button>
-                );
-              })}
-            </div>
+          <div key={pl.key} className="setup-name-field">
+            <span className="setup-name-dot" style={{ background: pl.color }} />
+            <input
+              className="setup-name-input"
+              type="text"
+              maxLength={12}
+              placeholder={mode === MODE.VS_CPU ? 'Seu nome' : pl.label.replace(/^.. /, '')}
+              value={names[pl.key]}
+              onChange={(e) => setNames({ ...names, [pl.key]: e.target.value })}
+            />
           </div>
         ))}
+        {mode === MODE.VS_CPU && <div className="setup-vs">🆚 🤖 CPU</div>}
       </div>
+
+      {hasFieldables && (
+        <>
+          <p className="setup-hint">
+            Escale até 2 e toque na sua metade. 👑🔥 têm poder; os outros só rebatem. Toque de novo
+            pra remover.
+          </p>
+          <div
+            className="setup-field"
+            ref={fieldRef}
+            onClick={onFieldClick}
+            onTouchStart={(e) => {
+              e.preventDefault();
+              const t = e.changedTouches[0];
+              onFieldClick({ clientX: t.clientX, clientY: t.clientY });
+            }}
+          >
+            <div className="setup-half setup-half--left" />
+            <div className="setup-half setup-half--right" />
+            <div className="setup-centerline" />
+            {placements.map((p) => (
+              <div key={p.id} className="setup-legend" style={markerStyle(p)}>
+                {POWERS[p.power] ? POWERS[p.power].emoji : p.number}
+              </div>
+            ))}
+          </div>
+
+          <div className="setup-pickers">
+            {players.map((pl) => (
+              <div key={pl.key} className="setup-picker">
+                <div className="setup-picker-label" style={{ color: pl.color }}>
+                  {pl.label} ({countFor(pl.key)}/{LEGEND.MAX_PER_PLAYER})
+                </div>
+                <div className="setup-chips">
+                  {ownedPlayers.map((p) => {
+                    const isArmed = armed && armed.owner === pl.key && armed.name === p.name;
+                    const power = POWERS[p.power];
+                    const icon = power ? power.emoji : RARITY[p.rarity].emoji;
+                    return (
+                      <button
+                        key={p.name}
+                        className={`setup-chip ${isArmed ? 'setup-chip--armed' : ''}`}
+                        onClick={() => setArmed({ owner: pl.key, name: p.name })}
+                      >
+                        <span className="setup-chip-emoji">{icon}</span>
+                        {p.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <button className="btn btn--green" onClick={start}>
         ▶️ Começar!

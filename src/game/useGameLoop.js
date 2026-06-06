@@ -56,6 +56,7 @@ function freshState(placements) {
       rarity: p.rarity,
       number: p.number,
       name: p.name,
+      img: p.img,
       cooldown: 0,
       flash: 0,
     })),

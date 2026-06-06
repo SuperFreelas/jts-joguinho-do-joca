@@ -346,8 +346,11 @@ canvas.field {
 /* ---------- Setup (posicionar lendários) ---------- */
 .setup-screen {
   justify-content: flex-start;
-  padding: 14px 12px;
+  padding: 14px 12px 24px;
   gap: 6px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: auto;
 }
 .setup-title {
   font-size: clamp(24px, 6vw, 38px);
@@ -360,6 +363,47 @@ canvas.field {
   color: var(--line);
   margin: 0 0 8px;
   max-width: 560px;
+}
+.setup-names {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 6px 0 10px;
+}
+.setup-name-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 6px 10px;
+}
+.setup-name-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.setup-name-input {
+  font-family: 'Baloo 2', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 140px;
+}
+.setup-name-input::placeholder {
+  color: rgba(234, 255, 242, 0.4);
+}
+.setup-vs {
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--line);
 }
 .setup-field {
   position: relative;

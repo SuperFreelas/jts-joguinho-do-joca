@@ -15,6 +15,7 @@ export default function App() {
   const [mode, setMode] = useState(MODE.TWO_PLAYER);
   const [result, setResult] = useState(null);
   const [placements, setPlacements] = useState([]);
+  const [names, setNames] = useState({ right: 'Jogador 1', left: 'Jogador 2' });
   const [collection, setCollection] = useState(() => loadCollection());
 
   const startMatch = useCallback((m) => {
@@ -22,8 +23,9 @@ export default function App() {
     setScreen(SCREEN.SETUP);
   }, []);
 
-  const onSetupReady = useCallback((pl) => {
+  const onSetupReady = useCallback(({ placements: pl, names: nm }) => {
     setPlacements(pl || []);
+    if (nm) setNames(nm);
     setScreen(SCREEN.GAME);
   }, []);
 
@@ -46,9 +48,9 @@ export default function App() {
     case SCREEN.SETUP:
       return <SetupScreen mode={mode} collection={collection} onReady={onSetupReady} />;
     case SCREEN.GAME:
-      return <GameScreen mode={mode} onFinish={onFinish} placements={placements} />;
+      return <GameScreen mode={mode} onFinish={onFinish} placements={placements} names={names} />;
     case SCREEN.RESULT:
-      return <ResultScreen result={result} onMenu={goMenu} onOpenBaller={openBaller} />;
+      return <ResultScreen result={result} names={names} onMenu={goMenu} onOpenBaller={openBaller} />;
     case SCREEN.BALLER:
       return <BallerScreen collection={collection} onCollected={onCollected} />;
     case SCREEN.ALBUM:

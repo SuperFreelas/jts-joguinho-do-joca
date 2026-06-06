@@ -24,3 +24,23 @@ export function saveCollection(c) {
     /* localStorage indisponível (modo privado) — ignora */
   }
 }
+
+// --- Nomes dos jogadores (lembrados entre partidas) ---
+const NAMES_KEY = 'golagol.names.v1';
+
+export function loadNames() {
+  try {
+    const o = JSON.parse(localStorage.getItem(NAMES_KEY)) || {};
+    return { right: o.right || '', left: o.left || '' };
+  } catch {
+    return { right: '', left: '' };
+  }
+}
+
+export function saveNames(n) {
+  try {
+    localStorage.setItem(NAMES_KEY, JSON.stringify({ right: n.right || '', left: n.left || '' }));
+  } catch {
+    /* ignora */
+  }
+}

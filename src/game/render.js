@@ -170,45 +170,95 @@ function drawPaddle(ctx, paddle, color, opts = {}) {
 }
 
 function drawLegends(ctx, legends) {
+  const pulse = 0.5 + 0.5 * Math.sin(frameCount * 0.15);
   for (const lg of legends) {
     const power = POWERS[lg.power];
     const hasPower = !!power;
-    const fill = hasPower ? power.color : (RARITY[lg.rarity] || RARITY.COMUM).color;
+    const ringColor = hasPower ? power.color : (RARITY[lg.rarity] || RARITY.COMUM).color;
+    const r = lg.r;
+
     ctx.save();
-    // corpo
-    ctx.shadowColor = fill;
-    ctx.shadowBlur = hasPower ? 14 : 8;
-    ctx.fillStyle = fill;
+    // aura/anel na cor do poder (estilizado) — pulsa quando tem poder
+    ctx.shadowColor = ringColor;
+    ctx.shadowBlur = hasPower ? 12 + pulse * 12 : 8;
+    ctx.fillStyle = ringColor;
     ctx.beginPath();
-    ctx.arc(lg.x, lg.y, lg.r, 0, Math.PI * 2);
+    ctx.arc(lg.x, lg.y, r, 0, Math.PI * 2);
     ctx.fill();
-    // borda: dourada (com poder) ou clara (bloqueador)
-    ctx.shadowBlur = 0;
-    ctx.lineWidth = hasPower ? 3 : 2;
-    ctx.strokeStyle = hasPower ? '#FFD700' : 'rgba(255,255,255,0.6)';
-    ctx.beginPath();
-    ctx.arc(lg.x, lg.y, lg.r, 0, Math.PI * 2);
-    ctx.stroke();
-    // conteúdo: emoji do poder OU número da camisa
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    if (hasPower) {
-      ctx.font = `${Math.round(lg.r * 1.1)}px sans-serif`;
-      ctx.fillText(power.emoji, lg.x, lg.y + 1);
+    ctx.restore();
+
+    // avatar recortado no círculo (um pouco menor que o anel)
+    const inner = r - 3;
+    if (lg.img && lg.img.ready) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(lg.x, lg.y, inner, 0, Math.PI * 2);
+      ctx.clip();
+      // fundo claro atrás do avatar
+      ctx.fillStyle = '#0d2818';
+      ctx.fillRect(lg.x - inner, lg.y - inner, inner * 2, inner * 2);
+      // avatar 100x130: enquadra a cabeça no círculo
+      const w = inner * 2.1;
+      const h = w * 1.3;
+      ctx.drawImage(lg.img.img, lg.x - w / 2, lg.y - h * 0.4, w, h);
+      ctx.restore();
     } else {
-      ctx.font = `800 ${Math.round(lg.r * 0.9)}px "Baloo 2", sans-serif`;
-      ctx.fillStyle = '#ffffff';
+      // fallback: número
+      ctx.save();
+      ctx.fillStyle = '#0d2818';
+      ctx.beginPath();
+      ctx.arc(lg.x, lg.y, inner, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = `800 ${Math.round(r * 0.9)}px "Baloo 2", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       ctx.fillText(String(lg.number ?? ''), lg.x, lg.y + 1);
+      ctx.restore();
     }
+
+    // borda: dourada (poder) ou clara (bloqueador)
+    ctx.save();
+    ctx.lineWidth = hasPower ? 3 : 2;
+    ctx.strokeStyle = hasPower ? '#FFD700' : 'rgba(255,255,255,0.7)';
+    ctx.beginPath();
+    ctx.arc(lg.x, lg.y, r, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    // badge estilizado do poder (canto inferior-direito)
+    if (hasPower) {
+      const bx = lg.x + r * 0.7;
+      const by = lg.y + r * 0.7;
+      const br = r * 0.5;
+      ctx.save();
+      ctx.shadowColor = power.color;
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = power.color;
+      ctx.beginPath();
+      ctx.arc(bx, by, br, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#fff';
+      ctx.stroke();
+      ctx.font = `${Math.round(br * 1.3)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(power.emoji, bx, by + 1);
+      ctx.restore();
+    }
+
     // flash branco ao ser atingido
     if (lg.flash > 0) {
+      ctx.save();
       ctx.globalAlpha = (lg.flash / 12) * 0.85;
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(lg.x, lg.y, lg.r, 0, Math.PI * 2);
+      ctx.arc(lg.x, lg.y, r, 0, Math.PI * 2);
       ctx.fill();
+      ctx.restore();
     }
-    ctx.restore();
   }
 }
 

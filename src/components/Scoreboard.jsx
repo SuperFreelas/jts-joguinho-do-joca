@@ -1,16 +1,23 @@
 import { useEffect, useRef } from 'react';
 import { TIMER, MODE } from '../data/constants.js';
 
+const short = (s, fb) => {
+  const v = (s || '').trim() || fb;
+  return v.length > 10 ? v.slice(0, 10) : v;
+};
+
 // Placar estilo transmissão de TV. Lê o estado vivo do jogo (stateRef) num rAF
 // próprio e atualiza só os nós de texto via ref — sem re-render do React a 60fps.
-export default function Scoreboard({ stateRef, mode }) {
+export default function Scoreboard({ stateRef, mode, names }) {
   const leftScoreRef = useRef(null);
   const rightScoreRef = useRef(null);
   const timerRef = useRef(null);
 
   // rótulos dos times (esquerda = P2 azul, direita = P1 amarelo)
-  const labels =
-    mode === MODE.VS_CPU ? { left: 'CPU', right: 'VOCÊ' } : { left: 'P2', right: 'P1' };
+  const labels = {
+    left: short(names?.left, mode === MODE.VS_CPU ? 'CPU' : 'P2'),
+    right: short(names?.right, mode === MODE.VS_CPU ? 'Você' : 'P1'),
+  };
 
   useEffect(() => {
     let raf = 0;

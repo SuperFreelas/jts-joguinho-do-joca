@@ -109,7 +109,13 @@ export default function Avatar({ player, size = 120 }) {
   const eyeY = 44;
 
   return (
-    <svg viewBox="0 0 100 130" width={size} height={size * 1.3} aria-label={player.name}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 100 130"
+      width={size}
+      height={size * 1.3}
+      aria-label={player.name}
+    >
       {/* orelhas */}
       <circle cx="22" cy={eyeY} r="6" fill={skin} />
       <circle cx="78" cy={eyeY} r="6" fill={skin} />

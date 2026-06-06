@@ -1,19 +1,27 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FIELD, MODE } from '../data/constants.js';
 import { useGameLoop } from '../game/useGameLoop.js';
 import { gamepadStatus, onGamepadChange } from '../game/input.js';
+import { PLAYERS_BY_NAME } from '../data/players.js';
+import { getAvatarImage } from '../collection/avatarImage.js';
 import TouchControls from './TouchControls.jsx';
 import Scoreboard from './Scoreboard.jsx';
 
 // Tela de jogo: canvas escalado para caber (transform via ResizeObserver),
 // overlay de reconexão de controle, e touch controls no mobile.
-export default function GameScreen({ mode, onFinish, placements }) {
+export default function GameScreen({ mode, onFinish, placements, names }) {
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);
   const scalerRef = useRef(null);
   const [needGamepad, setNeedGamepad] = useState(false);
 
-  const stateRef = useGameLoop(canvasRef, { mode, onFinish, placements });
+  // anexa a imagem do avatar (rasterizada) a cada jogador escalado
+  const enriched = useMemo(
+    () => (placements || []).map((p) => ({ ...p, img: getAvatarImage(PLAYERS_BY_NAME[p.name]) })),
+    [placements],
+  );
+
+  const stateRef = useGameLoop(canvasRef, { mode, onFinish, placements: enriched });
 
   // Escala o campo (480x800 lógico) para caber na área disponível.
   useEffect(() => {
@@ -61,7 +69,7 @@ export default function GameScreen({ mode, onFinish, placements }) {
         <TouchControls mode={mode} />
       </div>
 
-      <Scoreboard stateRef={stateRef} mode={mode} />
+      <Scoreboard stateRef={stateRef} mode={mode} names={names} />
 
       {needGamepad && (
         <div className="overlay">
