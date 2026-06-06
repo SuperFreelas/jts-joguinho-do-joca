@@ -149,15 +149,86 @@ function drawPaddle(ctx, paddle, color, opts = {}) {
   ctx.restore();
 }
 
+// Pentágono regular preto (gomo da bola), centrado em (cx,cy) com raio rr.
+function blackPentagon(ctx, cx, cy, rr, rotation) {
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a = rotation - Math.PI / 2 + (i * 2 * Math.PI) / 5;
+    const px = cx + Math.cos(a) * rr;
+    const py = cy + Math.sin(a) * rr;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
+// Bola de futebol clássica (Telstar preto-e-branco) com sombreado 3D e rotação.
 function drawBall(ctx, ball, alpha = 1) {
+  const R = BALL.R;
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.shadowColor = COLORS.ball;
-  ctx.shadowBlur = 18;
-  ctx.fillStyle = COLORS.ball;
+
+  // glow sutil
+  ctx.shadowColor = 'rgba(255,255,255,0.85)';
+  ctx.shadowBlur = 14;
+
+  // esfera branca com leve sombreado (luz em cima à esquerda)
+  const grad = ctx.createRadialGradient(
+    ball.x - R * 0.35,
+    ball.y - R * 0.35,
+    R * 0.15,
+    ball.x,
+    ball.y,
+    R,
+  );
+  grad.addColorStop(0, '#ffffff');
+  grad.addColorStop(0.7, '#f2f2f2');
+  grad.addColorStop(1, '#cfd4d2');
+  ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.arc(ball.x, ball.y, BALL.R, 0, Math.PI * 2);
+  ctx.arc(ball.x, ball.y, R, 0, Math.PI * 2);
   ctx.fill();
+
+  // a partir daqui desenha os gomos dentro do círculo (sem glow)
+  ctx.shadowBlur = 0;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, R, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.translate(ball.x, ball.y);
+  ctx.rotate(ball.rot || 0);
+
+  ctx.fillStyle = '#161616';
+  // pentágono central
+  blackPentagon(ctx, 0, 0, R * 0.42, 0);
+  // 5 pentágonos parciais junto à borda (cortados pelo clip)
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5 + Math.PI / 5;
+    const cx = Math.cos(a) * R * 1.02;
+    const cy = Math.sin(a) * R * 1.02;
+    blackPentagon(ctx, cx, cy, R * 0.4, a + Math.PI);
+  }
+
+  // costuras finas ligando o pentágono central aos da borda
+  ctx.strokeStyle = 'rgba(40,40,40,0.55)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < 5; i++) {
+    const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(a) * R * 0.42, Math.sin(a) * R * 0.42);
+    ctx.lineTo(Math.cos(a) * R, Math.sin(a) * R);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // contorno
+  ctx.strokeStyle = 'rgba(120,120,120,0.6)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, R - 0.5, 0, Math.PI * 2);
+  ctx.stroke();
+
   ctx.restore();
 }
 

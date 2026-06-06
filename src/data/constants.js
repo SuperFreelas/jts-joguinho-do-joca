@@ -51,7 +51,7 @@ export const PADDLE = {
 
 // --- Bola ---
 export const BALL = {
-  R: 9,
+  R: 11,
   INITIAL_SPEED: 4.2, // px/tick
   MAX_SPEED: 15, // px/tick
   RALLY_FACTOR: 0.08, // vel *= (1 + 0.08 * rallies) a cada defesa

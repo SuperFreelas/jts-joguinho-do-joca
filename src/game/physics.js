@@ -29,6 +29,7 @@ export function spawnBall(rng = Math.random) {
     y: FIELD.H / 2,
     vx: Math.cos(angle) * speed * dir,
     vy: Math.sin(angle) * speed,
+    rot: 0, // rotação visual (gira conforme rola)
   };
 }
 
@@ -54,6 +55,10 @@ export function stepBall(ball, paddles, opts = {}) {
 
   ball.x += ball.vx;
   ball.y += ball.vy;
+
+  // gira a bola conforme se desloca (sentido pela direção horizontal)
+  const dist = Math.hypot(ball.vx, ball.vy);
+  ball.rot = (ball.rot || 0) + (dist / BALL.R) * (ball.vx >= 0 ? 1 : -1) * 0.35;
 
   // Paredes de cima/baixo
   if (ball.y - r < 0) {
