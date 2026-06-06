@@ -135,6 +135,32 @@ body {
 .gamepad-status .ok { color: #6dffa8; }
 .gamepad-status .wait { color: #ffce6b; }
 
+/* ---------- Menu: lendários ---------- */
+.menu-legends {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  max-width: min(90vw, 380px);
+  margin-top: 14px;
+}
+.menu-legends-label {
+  width: 100%;
+  font-size: 13px;
+  color: var(--gold);
+  font-weight: 700;
+}
+.menu-legend-chip {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(255, 215, 0, 0.12);
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
 /* ---------- Game screen ---------- */
 .game-wrap {
   position: relative;
@@ -315,6 +341,117 @@ canvas.field {
 .result-sub {
   font-size: clamp(18px, 5vw, 30px);
   margin-bottom: 18px;
+}
+
+/* ---------- Setup (posicionar lendários) ---------- */
+.setup-screen {
+  justify-content: flex-start;
+  padding: 14px 12px;
+  gap: 6px;
+}
+.setup-title {
+  font-size: clamp(24px, 6vw, 38px);
+  font-weight: 800;
+  color: var(--gold);
+  margin: 6px 0 2px;
+}
+.setup-hint {
+  font-size: clamp(12px, 3vw, 16px);
+  color: var(--line);
+  margin: 0 0 8px;
+  max-width: 560px;
+}
+.setup-field {
+  position: relative;
+  width: min(92vw, 700px);
+  aspect-ratio: 854 / 480;
+  background: linear-gradient(90deg, #1a4d2e, #164428);
+  border: 2px solid rgba(136, 204, 170, 0.5);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+.setup-half {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+}
+.setup-half--left {
+  left: 0;
+  background: rgba(51, 153, 255, 0.1);
+}
+.setup-half--right {
+  right: 0;
+  background: rgba(255, 204, 0, 0.1);
+}
+.setup-centerline {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 2px dashed rgba(136, 204, 170, 0.5);
+}
+.setup-legend {
+  position: absolute;
+  width: 11%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(16px, 4vw, 26px);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4);
+}
+.setup-pickers {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: min(92vw, 700px);
+  margin: 10px 0;
+}
+.setup-picker {
+  flex: 1;
+  min-width: 200px;
+}
+.setup-picker-label {
+  font-weight: 800;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.setup-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+.setup-chip {
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.setup-chip--armed {
+  border-color: var(--gold);
+  background: rgba(255, 215, 0, 0.18);
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+}
+.setup-chip-emoji {
+  font-size: 16px;
 }
 
 /* ---------- Baller (abrir figurinha) ---------- */

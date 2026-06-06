@@ -14,6 +14,7 @@ export default function App() {
   const [screen, setScreen] = useState(SCREEN.MENU);
   const [mode, setMode] = useState(MODE.TWO_PLAYER);
   const [result, setResult] = useState(null);
+  const [placements, setPlacements] = useState([]);
   const [collection, setCollection] = useState(() => loadCollection());
 
   const startMatch = useCallback((m) => {
@@ -21,7 +22,10 @@ export default function App() {
     setScreen(SCREEN.SETUP);
   }, []);
 
-  const onSetupReady = useCallback(() => setScreen(SCREEN.GAME), []);
+  const onSetupReady = useCallback((pl) => {
+    setPlacements(pl || []);
+    setScreen(SCREEN.GAME);
+  }, []);
 
   const onFinish = useCallback((res) => {
     setResult(res);
@@ -40,9 +44,9 @@ export default function App() {
 
   switch (screen) {
     case SCREEN.SETUP:
-      return <SetupScreen mode={mode} onReady={onSetupReady} />;
+      return <SetupScreen mode={mode} collection={collection} onReady={onSetupReady} />;
     case SCREEN.GAME:
-      return <GameScreen mode={mode} onFinish={onFinish} />;
+      return <GameScreen mode={mode} onFinish={onFinish} placements={placements} />;
     case SCREEN.RESULT:
       return <ResultScreen result={result} onMenu={goMenu} onOpenBaller={openBaller} />;
     case SCREEN.BALLER:
@@ -52,7 +56,12 @@ export default function App() {
     case SCREEN.MENU:
     default:
       return (
-        <Menu onStart={startMatch} onOpenAlbum={openAlbum} collectionCount={collection.owned.length} />
+        <Menu
+          onStart={startMatch}
+          onOpenAlbum={openAlbum}
+          collection={collection}
+          collectionCount={collection.owned.length}
+        />
       );
   }
 }

@@ -1,45 +1,86 @@
 // Hook do game loop: fixed timestep (16.67ms/tick), integra input+física+render,
-// gere placar/cronômetro/gols e o ciclo de vida do rAF.
+// gere placar/cronômetro/gols, lendários em campo, superpoderes e o ciclo do rAF.
 //
 // Contrato de ciclo de vida (F-10): o rAF é cancelado no cleanup do useEffect;
 // `running` vira false ao terminar a partida; resetGameState() roda no mount.
 
 import { useEffect, useRef } from 'react';
-import { FIELD, TICK_MS, MAX_TICKS_PER_FRAME, BALL, TIMER, MODE } from '../data/constants.js';
+import {
+  FIELD,
+  TICK_MS,
+  MAX_TICKS_PER_FRAME,
+  BALL,
+  PADDLE,
+  TIMER,
+  MODE,
+} from '../data/constants.js';
 import {
   spawnBall,
   stepBall,
   applyRallyBoost,
   initialPaddles,
   movePaddle,
+  collideLegends,
   ballSpeed,
   setBallSpeed,
 } from './physics.js';
 import { readPlayerAxis } from './input.js';
 import { aiAxis } from './ai.js';
+import { POWERS } from '../data/powers.js';
+import { applyPower } from './applyPower.js';
 import { setupCanvas, renderFrame } from './render.js';
 
-function freshState() {
+function freshBall() {
+  return { ...spawnBall(), fire: false, alpha: 1 };
+}
+
+function freshState(placements) {
   return {
-    ball: spawnBall(),
+    ball: freshBall(),
     paddles: initialPaddles(),
     score: { left: 0, right: 0 },
     rallies: 0,
     timeLeft: TIMER.MATCH_SECONDS,
     elapsedMs: 0,
-    // pausa pós-gol
     goalPauseMs: 0,
     goalFlashMs: 0,
     goalFlashAlpha: 0,
-    resetting: false,
     finished: false,
     powerMessage: null,
-    ballAlpha: 1,
+    legends: (placements || []).map((p) => ({
+      x: p.x,
+      y: p.y,
+      r: 24,
+      power: p.power,
+      owner: p.owner, // 'left' | 'right'
+      cooldown: 0,
+      flash: 0,
+    })),
+    effects: {
+      invisibleTicks: 0,
+      superGoalie: { left: 0, right: 0 },
+      freeze: { left: 0, right: 0 },
+    },
+    particles: [],
   };
 }
 
-// onFinish(result) chamado uma vez quando o tempo acaba.
-export function useGameLoop(canvasRef, { mode, onFinish }) {
+function spawnFireParticles(s) {
+  const b = s.ball;
+  for (let i = 0; i < 2; i++) {
+    if (s.particles.length > 70) break;
+    s.particles.push({
+      x: b.x,
+      y: b.y,
+      vx: -b.vx * 0.15 + (Math.random() - 0.5) * 1.5,
+      vy: -b.vy * 0.15 + (Math.random() - 0.5) * 1.5,
+      life: 18,
+      max: 18,
+    });
+  }
+}
+
+export function useGameLoop(canvasRef, { mode, onFinish, placements }) {
   const stateRef = useRef(null);
   const rafRef = useRef(0);
   const runningRef = useRef(false);
@@ -51,27 +92,37 @@ export function useGameLoop(canvasRef, { mode, onFinish }) {
     if (!canvas) return;
     const ctx = setupCanvas(canvas);
 
-    // reset total no mount (evita vazamento entre partidas)
-    const state = freshState();
+    const state = freshState(placements);
     stateRef.current = state;
     runningRef.current = true;
     accRef.current = 0;
     lastRef.current = performance.now();
 
+    function applyPaddleSize(side) {
+      const p = side === 'left' ? state.paddles.left : state.paddles.right;
+      const big = state.effects.superGoalie[side] > 0;
+      const targetH = big ? PADDLE.LEN * PADDLE.GOALIE_MULT : PADDLE.LEN;
+      if (p.h !== targetH) {
+        p.h = targetH;
+        const half = p.h / 2;
+        p.y = Math.max(half, Math.min(FIELD.H - half, p.y));
+      }
+    }
+
     function tick() {
       const s = stateRef.current;
 
-      // --- Pausa pós-gol / reset ---
+      // Pausa pós-gol / reset
       if (s.goalPauseMs > 0) {
         s.goalPauseMs -= TICK_MS;
         if (s.goalPauseMs <= 0) {
-          s.ball = spawnBall();
+          s.ball = freshBall();
           s.rallies = 0;
         }
         return;
       }
 
-      // --- Cronômetro ---
+      // Cronômetro
       s.elapsedMs += TICK_MS;
       s.timeLeft = Math.max(0, TIMER.MATCH_SECONDS - s.elapsedMs / 1000);
       if (s.timeLeft <= 0 && !s.finished) {
@@ -83,30 +134,63 @@ export function useGameLoop(canvasRef, { mode, onFinish }) {
         return;
       }
 
-      // --- Input dos goleiros ---
-      const p1 = readPlayerAxis(0); // P1 = goleiro da direita (amarelo)
-      const p2 = mode === MODE.VS_CPU ? aiAxis(s) : readPlayerAxis(1); // P2 = esquerda (azul)
-      movePaddle(s.paddles.right, p1);
-      movePaddle(s.paddles.left, p2);
+      // Decai cooldowns/flash dos lendários
+      for (const lg of s.legends) {
+        if (lg.cooldown > 0) lg.cooldown -= 1;
+        if (lg.flash > 0) lg.flash -= 1;
+      }
+      // Decai efeitos
+      const ef = s.effects;
+      if (ef.invisibleTicks > 0) ef.invisibleTicks -= 1;
+      if (ef.superGoalie.left > 0) ef.superGoalie.left -= 1;
+      if (ef.superGoalie.right > 0) ef.superGoalie.right -= 1;
+      if (ef.freeze.left > 0) ef.freeze.left -= 1;
+      if (ef.freeze.right > 0) ef.freeze.right -= 1;
 
-      // --- Física da bola ---
+      // Tamanho dos goleiros (Super Goleiro)
+      applyPaddleSize('left');
+      applyPaddleSize('right');
+
+      // Alpha da bola (Bola Invisível)
+      s.ball.alpha = ef.invisibleTicks > 0 ? POWERS.BOLA_INVISIVEL.ballAlpha : 1;
+
+      // Input dos goleiros (congelado não se move)
+      const p1 = readPlayerAxis(0); // direita (amarelo)
+      const p2 = mode === MODE.VS_CPU ? aiAxis(s) : readPlayerAxis(1); // esquerda (azul)
+      if (ef.freeze.right <= 0) movePaddle(s.paddles.right, p1);
+      if (ef.freeze.left <= 0) movePaddle(s.paddles.left, p2);
+
+      // Física da bola
       const ev = stepBall(s.ball, s.paddles);
       if (ev.type === 'save') {
         s.rallies += 1;
         applyRallyBoost(s.ball, s.rallies);
+        s.ball.fire = false; // Super Chute dura 1 trajetória
       } else if (ev.type === 'goal') {
         s.score[ev.scorer] += 1;
         s.goalPauseMs = TIMER.GOAL_PAUSE_MS;
         s.goalFlashMs = TIMER.GOAL_FLASH_MS;
-        // posiciona bola "fora" pra não re-detectar
-        s.ball.x = FIELD.W / 2;
-        s.ball.y = FIELD.H / 2;
         s.ball.vx = 0;
         s.ball.vy = 0;
+        s.ball.fire = false;
+        s.particles.length = 0;
+      } else {
+        // Colisão com lendários (atravessa se invisível)
+        const hit = collideLegends(s.ball, s.legends, { passThrough: ef.invisibleTicks > 0 });
+        if (hit) applyPower(s, hit);
       }
 
-      // --- Decaimento da velocidade quando "lenta" (reset suave) ---
-      // (mantém a bola na velocidade inicial logo após spawn)
+      // Partículas de fogo
+      if (s.ball.fire && s.goalPauseMs <= 0) spawnFireParticles(s);
+      for (let i = s.particles.length - 1; i >= 0; i--) {
+        const pt = s.particles[i];
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.life -= 1;
+        if (pt.life <= 0) s.particles.splice(i, 1);
+      }
+
+      // mantém velocidade mínima
       const sp = ballSpeed(s.ball);
       if (s.goalPauseMs <= 0 && sp > 0 && sp < BALL.INITIAL_SPEED) {
         setBallSpeed(s.ball, BALL.INITIAL_SPEED);
@@ -129,9 +213,6 @@ export function useGameLoop(canvasRef, { mode, onFinish }) {
     }
 
     function frame(now) {
-      if (!runningRef.current && !stateRef.current.finished) {
-        // parado mas não finalizado (não deveria acontecer) — ainda assim desenha
-      }
       const dt = Math.min(now - lastRef.current, TICK_MS * MAX_TICKS_PER_FRAME);
       lastRef.current = now;
 
@@ -146,10 +227,7 @@ export function useGameLoop(canvasRef, { mode, onFinish }) {
         }
       }
       updateEffects(dt);
-
-      // desenha sempre (mesmo no último frame finalizado)
       renderFrame(ctx, stateRef.current);
-
       rafRef.current = requestAnimationFrame(frame);
     }
 

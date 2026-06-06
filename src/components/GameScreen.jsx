@@ -7,13 +7,13 @@ import Scoreboard from './Scoreboard.jsx';
 
 // Tela de jogo: canvas escalado para caber (transform via ResizeObserver),
 // overlay de reconexão de controle, e touch controls no mobile.
-export default function GameScreen({ mode, onFinish }) {
+export default function GameScreen({ mode, onFinish, placements }) {
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);
   const scalerRef = useRef(null);
   const [needGamepad, setNeedGamepad] = useState(false);
 
-  const stateRef = useGameLoop(canvasRef, { mode, onFinish });
+  const stateRef = useGameLoop(canvasRef, { mode, onFinish, placements });
 
   // Escala o campo (480x800 lógico) para caber na área disponível.
   useEffect(() => {

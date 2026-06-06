@@ -47,6 +47,22 @@ export const PADDLE = {
   R: 6, // raio das bordas
   SPEED: 6.5, // px/tick no input máximo (movimento vertical)
   MARGIN_X: 30, // distância da borda esquerda/direita
+  GOALIE_MULT: 1.9, // Super Goleiro: multiplica LEN
+};
+
+// --- Lendários em campo ---
+export const LEGEND = {
+  R: 24, // raio do círculo do lendário
+  COOLDOWN_TICKS: 18, // evita múltiplos disparos na mesma batida
+  MAX_PER_PLAYER: 2,
+};
+
+// --- IA (VS Máquina) ---
+export const AI = {
+  DEADZONE_PX: 8,
+  REACT_TOWARD: 0.85, // bola vindo
+  REACT_AWAY: 0.4, // bola indo embora
+  HESITATE: 0.08, // chance de ficar parado por tick
 };
 
 // --- Bola ---

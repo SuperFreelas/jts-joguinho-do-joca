@@ -2,7 +2,7 @@
 // Bola viaja na horizontal; goleiros são barras verticais nas laterais (esq/dir).
 // Sem efeitos colaterais visuais — só atualiza estado e devolve eventos.
 
-import { FIELD, BALL, PADDLE, GOAL } from '../data/constants.js';
+import { FIELD, BALL, PADDLE, GOAL, LEGEND } from '../data/constants.js';
 
 export function clamp(v, lo, hi) {
   return v < lo ? lo : v > hi ? hi : v;
@@ -134,4 +134,41 @@ export function movePaddle(paddle, input) {
   paddle.y += input * PADDLE.SPEED;
   const half = paddle.h / 2;
   paddle.y = clamp(paddle.y, half, FIELD.H - half);
+}
+
+// Colisão da bola com os lendários em campo (círculos).
+// Reflete a bola (reflexão no normal) + leve aleatoriedade, acelera 12%, marca flash
+// e respeita cooldown por lendário. Retorna o lendário atingido (ou null).
+// `passThrough` (Bola Invisível) ignora as colisões.
+export function collideLegends(ball, legends, opts = {}) {
+  if (opts.passThrough) return null;
+  const rng = opts.rng || Math.random;
+  for (const lg of legends) {
+    if (lg.cooldown > 0) continue;
+    const dx = ball.x - lg.x;
+    const dy = ball.y - lg.y;
+    const dist = Math.hypot(dx, dy);
+    const minDist = lg.r + BALL.R;
+    if (dist <= minDist && dist > 0) {
+      // normal
+      const nx = dx / dist;
+      const ny = dy / dist;
+      // reflete velocidade no normal: v' = v - 2(v·n)n
+      const vdot = ball.vx * nx + ball.vy * ny;
+      ball.vx -= 2 * vdot * nx;
+      ball.vy -= 2 * vdot * ny;
+      // leve aleatoriedade
+      ball.vx += (rng() - 0.5) * 0.6;
+      ball.vy += (rng() - 0.5) * 0.6;
+      // empurra a bola pra fora do círculo
+      ball.x = lg.x + nx * (minDist + 0.5);
+      ball.y = lg.y + ny * (minDist + 0.5);
+      // acelera 12% (cap)
+      setBallSpeed(ball, Math.min(ballSpeed(ball) * BALL.LEGEND_BOOST, BALL.MAX_SPEED));
+      lg.cooldown = LEGEND.COOLDOWN_TICKS;
+      lg.flash = 12;
+      return lg;
+    }
+  }
+  return null;
 }

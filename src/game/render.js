@@ -2,6 +2,9 @@
 // (FIELD.W x FIELD.H); o caller configura o transform de DPR antes (setupCanvas).
 
 import { FIELD, COLORS, PADDLE, BALL, GOAL } from '../data/constants.js';
+import { POWERS } from '../data/powers.js';
+
+let frameCount = 0; // para animações pulsantes
 
 export function setupCanvas(canvas) {
   const dpr = window.devicePixelRatio || 1;
@@ -131,22 +134,88 @@ function drawGoal(ctx, left) {
 }
 
 function drawPaddle(ctx, paddle, color, opts = {}) {
+  const pulse = 0.5 + 0.5 * Math.sin(frameCount * 0.18);
+  const frozen = opts.frozen;
+  const superG = opts.superGoalie;
+  const fill = frozen ? '#3aa0ff' : color;
+
   const x = paddle.x - paddle.w / 2;
   const y = paddle.y - paddle.h / 2;
   ctx.save();
-  ctx.shadowColor = opts.glow || color;
-  ctx.shadowBlur = 16;
-  ctx.fillStyle = color;
+  ctx.shadowColor = frozen ? '#2a7fff' : color;
+  ctx.shadowBlur = frozen ? 22 : 16;
+  ctx.fillStyle = fill;
   roundRect(ctx, x, y, paddle.w, paddle.h, PADDLE.R);
   ctx.fill();
-  if (opts.border) {
-    ctx.shadowBlur = 0;
+
+  if (superG) {
+    // borda verde pulsante
+    ctx.shadowColor = '#00cc66';
+    ctx.shadowBlur = 14 + pulse * 14;
     ctx.lineWidth = 3;
-    ctx.strokeStyle = opts.border;
-    roundRect(ctx, x, y, paddle.w, paddle.h, PADDLE.R);
+    ctx.strokeStyle = '#00cc66';
+    roundRect(ctx, x - 1, y - 1, paddle.w + 2, paddle.h + 2, PADDLE.R);
     ctx.stroke();
   }
   ctx.restore();
+
+  if (frozen) {
+    ctx.save();
+    ctx.font = '18px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('❄️', paddle.x, paddle.y - paddle.h / 2 - 12);
+    ctx.restore();
+  }
+}
+
+function drawLegends(ctx, legends) {
+  for (const lg of legends) {
+    const power = POWERS[lg.power];
+    if (!power) continue;
+    ctx.save();
+    // corpo
+    ctx.shadowColor = power.color;
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = power.color;
+    ctx.beginPath();
+    ctx.arc(lg.x, lg.y, lg.r, 0, Math.PI * 2);
+    ctx.fill();
+    // borda dourada
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(lg.x, lg.y, lg.r, 0, Math.PI * 2);
+    ctx.stroke();
+    // emoji do poder
+    ctx.font = `${Math.round(lg.r * 1.1)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(power.emoji, lg.x, lg.y + 1);
+    // flash branco ao ser atingido
+    if (lg.flash > 0) {
+      ctx.globalAlpha = (lg.flash / 12) * 0.85;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(lg.x, lg.y, lg.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function drawParticles(ctx, particles) {
+  for (const p of particles) {
+    const t = p.life / p.max;
+    ctx.save();
+    ctx.globalAlpha = t;
+    ctx.fillStyle = t > 0.5 ? '#ffd24d' : '#ff5500';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 1 + t * 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
 }
 
 // Pentágono regular preto (gomo da bola), centrado em (cx,cy) com raio rr.
@@ -163,8 +232,30 @@ function blackPentagon(ctx, cx, cy, rr, rotation) {
   ctx.fill();
 }
 
+// Bola de fogo (Super Chute).
+function drawFireBall(ctx, ball, alpha) {
+  const R = BALL.R * 1.15;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.shadowColor = '#ff3b00';
+  ctx.shadowBlur = 26;
+  const g = ctx.createRadialGradient(ball.x, ball.y, 1, ball.x, ball.y, R);
+  g.addColorStop(0, '#fff2a8');
+  g.addColorStop(0.45, '#ff9d2e');
+  g.addColorStop(1, '#ff3b00');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, R, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 // Bola de futebol clássica (Telstar preto-e-branco) com sombreado 3D e rotação.
 function drawBall(ctx, ball, alpha = 1) {
+  if (ball.fire) {
+    drawFireBall(ctx, ball, alpha);
+    return;
+  }
   const R = BALL.R;
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -256,13 +347,23 @@ function drawPowerMessage(ctx, msg) {
 }
 
 export function renderFrame(ctx, state) {
+  frameCount += 1;
   drawField(ctx);
 
-  const ballAlpha = state.ballAlpha ?? 1;
-  drawBall(ctx, state.ball, ballAlpha);
+  if (state.legends && state.legends.length) drawLegends(ctx, state.legends);
+  if (state.particles && state.particles.length) drawParticles(ctx, state.particles);
 
-  drawPaddle(ctx, state.paddles.left, COLORS.p2);
-  drawPaddle(ctx, state.paddles.right, COLORS.p1);
+  drawBall(ctx, state.ball, state.ball.alpha ?? 1);
+
+  const ef = state.effects || {};
+  drawPaddle(ctx, state.paddles.left, COLORS.p2, {
+    superGoalie: ef.superGoalie && ef.superGoalie.left > 0,
+    frozen: ef.freeze && ef.freeze.left > 0,
+  });
+  drawPaddle(ctx, state.paddles.right, COLORS.p1, {
+    superGoalie: ef.superGoalie && ef.superGoalie.right > 0,
+    frozen: ef.freeze && ef.freeze.right > 0,
+  });
 
   if (state.goalFlashAlpha > 0) drawGoalFlash(ctx, state.goalFlashAlpha);
   drawPowerMessage(ctx, state.powerMessage);

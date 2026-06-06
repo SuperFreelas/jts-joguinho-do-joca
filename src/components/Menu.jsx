@@ -1,9 +1,12 @@
 import GamepadStatus from './GamepadStatus.jsx';
 import { MODE } from '../data/constants.js';
+import { PLAYERS } from '../data/players.js';
+import { POWERS } from '../data/powers.js';
 
-// Menu principal. No 1º Tempo: 2 Jogadores ativo; VS Máquina e Álbum desabilitados
-// (entram nas fases seguintes), mas já presentes para o roteamento ficar completo.
-export default function Menu({ onStart, onOpenAlbum, collectionCount = 0 }) {
+// Menu principal.
+export default function Menu({ onStart, onOpenAlbum, collection, collectionCount = 0 }) {
+  const owned = new Set(collection?.owned || []);
+  const myLegends = PLAYERS.filter((p) => p.rarity === 'LENDARIO' && owned.has(p.name));
   return (
     <div className="screen">
       <h1 className="logo">GOL A GOL</h1>
@@ -13,12 +16,23 @@ export default function Menu({ onStart, onOpenAlbum, collectionCount = 0 }) {
       <button className="btn btn--green" onClick={() => onStart(MODE.TWO_PLAYER)}>
         👥 2 JOGADORES
       </button>
-      <button className="btn btn--blue btn--disabled" disabled title="Em breve (Prorrogação)">
+      <button className="btn btn--blue" onClick={() => onStart(MODE.VS_CPU)}>
         🤖 VS MÁQUINA
       </button>
       <button className="btn btn--gold" onClick={onOpenAlbum}>
         🏆 Meu Álbum ({collectionCount}/30)
       </button>
+
+      {myLegends.length > 0 && (
+        <div className="menu-legends">
+          <span className="menu-legends-label">👑 Seus lendários:</span>
+          {myLegends.map((p) => (
+            <span key={p.name} className="menu-legend-chip" title={POWERS[p.power].name}>
+              {POWERS[p.power].emoji} {p.name}
+            </span>
+          ))}
+        </div>
+      )}
 
       <GamepadStatus />
     </div>
