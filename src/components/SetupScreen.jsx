@@ -85,11 +85,13 @@ export default function SetupScreen({ mode, profiles, onReady }) {
     onFieldClick({ clientX: t.clientX, clientY: t.clientY });
   };
 
-  const Column = ({ side }) => {
+  // Função de renderização (NÃO um componente) — evita remontar o <input> a cada
+  // tecla (o que fazia perder o foco e só digitar uma letra por vez).
+  const renderColumn = (side) => {
     const owned = ownedFor(side);
     const placeholder = side === 'right' ? (mode === MODE.VS_CPU ? 'Seu nome' : 'Jogador 1') : 'Jogador 2';
     return (
-      <div className={`setup-col setup-col--${side}`}>
+      <div className={`setup-col setup-col--${side}`} key={`col-${side}`}>
         <div className="setup-col-head">
           <input
             className="setup-name-input"
@@ -151,7 +153,7 @@ export default function SetupScreen({ mode, profiles, onReady }) {
             <div className="setup-cpu-label">🤖 CPU</div>
           </div>
         ) : (
-          <Column side="left" />
+          renderColumn('left')
         )}
 
         {/* campo */}
@@ -189,7 +191,7 @@ export default function SetupScreen({ mode, profiles, onReady }) {
         </div>
 
         {/* direita = P1 (amarelo) */}
-        <Column side="right" />
+        {renderColumn('right')}
       </div>
 
       <button className="btn btn--green" onClick={start}>
